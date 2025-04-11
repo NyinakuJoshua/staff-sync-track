@@ -2,14 +2,23 @@
 import { ReactNode, useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 
+interface User {
+  id: number;
+  email: string;
+  name: string;
+  role: 'admin' | 'staff';
+  password: string;
+}
+
 interface AppLayoutProps {
   children: ReactNode;
   currentPage: string;
   onPageChange: (page: string) => void;
   onLogout: () => void;
+  currentUser?: User | null;
 }
 
-const AppLayout = ({ children, currentPage, onPageChange, onLogout }: AppLayoutProps) => {
+const AppLayout = ({ children, currentPage, onPageChange, onLogout, currentUser }: AppLayoutProps) => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {

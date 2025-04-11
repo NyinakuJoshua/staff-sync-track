@@ -10,7 +10,8 @@ import {
   MenuIcon,
   PieChartIcon,
   UsersIcon,
-  FileTextIcon
+  FileTextIcon,
+  UserIcon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +31,7 @@ const Sidebar = ({ onPageChange, onLogout, currentPage }: SidebarProps) => {
     { id: "calendar", icon: CalendarIcon, label: "Calendar" },
     { id: "reports", icon: FileTextIcon, label: "Reports" },
     { id: "analytics", icon: PieChartIcon, label: "Analytics" },
+    { id: "profile", icon: UserIcon, label: "Profile" },
   ];
 
   return (
