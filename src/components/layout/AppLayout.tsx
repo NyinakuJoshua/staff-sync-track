@@ -1,5 +1,5 @@
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 
 interface AppLayoutProps {
@@ -10,6 +10,21 @@ interface AppLayoutProps {
 }
 
 const AppLayout = ({ children, currentPage, onPageChange, onLogout }: AppLayoutProps) => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkSize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkSize();
+    window.addEventListener('resize', checkSize);
+    
+    return () => {
+      window.removeEventListener('resize', checkSize);
+    };
+  }, []);
+
   return (
     <div className="flex h-screen w-full overflow-hidden">
       <Sidebar 
@@ -17,7 +32,7 @@ const AppLayout = ({ children, currentPage, onPageChange, onLogout }: AppLayoutP
         onLogout={onLogout} 
         currentPage={currentPage} 
       />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto bg-gray-50">
         <div className="container py-6">
           {children}
         </div>

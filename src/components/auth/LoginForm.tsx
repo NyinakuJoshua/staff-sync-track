@@ -17,17 +17,18 @@ const LoginForm = ({ onLogin }: LoginFormProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error("Please enter both email and password");
+      return;
+    }
+    
     setLoading(true);
     
-    // This would be replaced with actual authentication logic
+    // Simulate API call delay
     setTimeout(() => {
       setLoading(false);
-      if (email === "admin@school.edu" && password === "password") {
-        toast.success("Login successful!");
-        onLogin(email, password);
-      } else {
-        toast.error("Invalid email or password");
-      }
+      onLogin(email, password);
     }, 1000);
   };
 
@@ -85,9 +86,6 @@ const LoginForm = ({ onLogin }: LoginFormProps) => {
           </Button>
         </form>
       </CardContent>
-      <CardFooter className="text-sm flex justify-center text-muted-foreground">
-        <div>For demo purposes, use: admin@school.edu / password</div>
-      </CardFooter>
     </Card>
   );
 };
