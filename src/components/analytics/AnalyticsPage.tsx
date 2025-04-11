@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -182,9 +181,6 @@ const AnalyticsPage = () => {
                   index="name"
                   colors={["#4ade80", "#facc15", "#f87171"]}
                   valueFormatter={(value) => `${value}%`}
-                  showLegend={true}
-                  showGridLines={false}
-                  startEndOnly={timePeriod === "month"}
                 />
               </div>
             </CardContent>
@@ -206,8 +202,6 @@ const AnalyticsPage = () => {
                   category="value"
                   index="name"
                   valueFormatter={(value) => `${value}%`}
-                  showLabel={true}
-                  showLegend={true}
                 />
               </div>
             </CardContent>
@@ -226,8 +220,6 @@ const AnalyticsPage = () => {
                   category="value"
                   index="name"
                   valueFormatter={(value) => `${value}%`}
-                  showLabel={true}
-                  showLegend={true}
                 />
               </div>
             </CardContent>
@@ -250,8 +242,6 @@ const AnalyticsPage = () => {
                   index="name"
                   colors={["#4ade80", "#facc15", "#f87171"]}
                   valueFormatter={(value) => `${value}%`}
-                  showLegend={true}
-                  layout="vertical"
                 />
               </div>
             </CardContent>
