@@ -8,6 +8,7 @@ import StaffPage from "@/components/staff/StaffPage";
 import CalendarPage from "@/components/calendar/CalendarPage";
 import ReportsPage from "@/components/reports/ReportsPage";
 import AnalyticsPage from "@/components/analytics/AnalyticsPage";
+import ProfilePage from "@/components/profile/ProfilePage";
 import { toast } from "sonner";
 
 interface User {
@@ -15,19 +16,18 @@ interface User {
   email: string;
   name: string;
   role: 'admin' | 'staff';
+  password: string;
 }
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-
-  // Mock user data with different roles
-  const users = [
-    { id: 1, email: "admin@school.edu", password: "password", name: "Admin User", role: "admin" as const },
-    { id: 2, email: "jsmith@school.edu", password: "password", name: "John Smith", role: "staff" as const },
-    { id: 3, email: "sjohnson@school.edu", password: "password", name: "Sarah Johnson", role: "staff" as const },
-  ];
+  const [users, setUsers] = useState<User[]>([
+    { id: 1, email: "admin@school.edu", password: "password", name: "Admin User", role: "admin" },
+    { id: 2, email: "jsmith@school.edu", password: "password", name: "John Smith", role: "staff" },
+    { id: 3, email: "sjohnson@school.edu", password: "password", name: "Sarah Johnson", role: "staff" },
+  ]);
 
   // Check if currentUser has access to a page
   const hasAccess = (page: string) => {
@@ -72,6 +72,42 @@ const Index = () => {
     toast.success("You have been logged out successfully!");
   };
 
+  const handleUpdateCredentials = (currentPassword: string, newPassword: string, newEmail: string, newName: string) => {
+    if (!currentUser) return;
+    
+    // Verify current password
+    if (currentPassword !== currentUser.password) {
+      toast.error("Current password is incorrect");
+      return false;
+    }
+    
+    // Update user in the users array
+    const updatedUsers = users.map(user => {
+      if (user.id === currentUser.id) {
+        return {
+          ...user,
+          password: newPassword || user.password,
+          email: newEmail || user.email,
+          name: newName || user.name
+        };
+      }
+      return user;
+    });
+    
+    setUsers(updatedUsers);
+    
+    // Update current user
+    setCurrentUser({
+      ...currentUser,
+      password: newPassword || currentUser.password,
+      email: newEmail || currentUser.email,
+      name: newName || currentUser.name
+    });
+    
+    toast.success("Profile updated successfully");
+    return true;
+  };
+
   const renderPage = () => {
     // If user has no access, show unauthorized message
     if (!hasAccess(currentPage)) {
@@ -96,6 +132,8 @@ const Index = () => {
         return <ReportsPage />;
       case "analytics":
         return <AnalyticsPage />;
+      case "profile":
+        return currentUser ? <ProfilePage user={currentUser} onUpdateCredentials={handleUpdateCredentials} /> : null;
       default:
         return <DashboardPage />;
     }
@@ -108,6 +146,7 @@ const Index = () => {
           currentPage={currentPage}
           onPageChange={setCurrentPage}
           onLogout={handleLogout}
+          currentUser={currentUser}
         >
           <div className="mb-4 border-b pb-2">
             <div className="text-sm text-muted-foreground">

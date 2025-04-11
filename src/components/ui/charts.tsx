@@ -1,12 +1,15 @@
 
-import * as React from "react";
+import React from "react";
 import {
   Area,
+  AreaChart as RechartsAreaChart,
   Bar,
+  BarChart as RechartsBarChart,
   CartesianGrid,
-  ComposedChart,
+  Cell,
   Legend,
   Line,
+  LineChart as RechartsLineChart,
   Pie,
   PieChart as RechartsPieChart,
   ResponsiveContainer,
@@ -14,320 +17,251 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from "./chart";
 
-// LineChart component
-interface LineChartProps {
+interface ChartProps {
   data: any[];
-  index: string;
-  categories: string[];
-  colors?: string[];
-  valueFormatter?: (value: number) => string;
-  showLegend?: boolean;
-  showGridLines?: boolean;
-  startEndOnly?: boolean;
+  height?: number;
+  width?: number;
   className?: string;
 }
 
-export function LineChart({
-  data,
-  index,
-  categories,
-  colors = ["#2563eb", "#f97316", "#8b5cf6", "#10b981"],
-  valueFormatter = (value) => `${value}`,
-  showLegend = true,
-  showGridLines = true,
-  startEndOnly = false,
-  className,
-}: LineChartProps) {
-  const config = React.useMemo(() => {
-    return categories.reduce((acc, category, i) => {
-      acc[category] = {
-        label: category,
-        color: colors[i % colors.length],
-      };
-      return acc;
-    }, {} as Record<string, { label: string; color: string }>);
-  }, [categories, colors]);
-
-  return (
-    <ChartContainer config={config} className={className}>
-      <ComposedChart data={data}>
-        {showGridLines && <CartesianGrid strokeDasharray="3 3" />}
-        <XAxis
-          dataKey={index}
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          tickFormatter={(value) => {
-            if (startEndOnly) {
-              const isFirstOrLast = value === data[0][index] || value === data[data.length - 1][index];
-              return isFirstOrLast ? value : "";
-            }
-            return value;
-          }}
-        />
-        <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={valueFormatter} />
-        <ChartTooltip
-          content={
-            <ChartTooltipContent 
-              valueFormatter={valueFormatter} 
-              indicator="line"
-            />
-          }
-        />
-        {categories.map((category, i) => (
-          <Line
-            key={category}
-            type="monotone"
-            dataKey={category}
-            stroke={colors[i % colors.length]}
-            strokeWidth={2}
-            dot={{ strokeWidth: 2, r: 2 }}
-            activeDot={{ r: 4, strokeWidth: 0 }}
-          />
-        ))}
-        {showLegend && (
-          <Legend
-            content={<ChartLegendContent payload={categories.map((category, i) => ({ 
-              value: category, 
-              color: colors[i % colors.length] 
-            }))} />}
-          />
-        )}
-      </ComposedChart>
-    </ChartContainer>
-  );
-}
-
-// AreaChart component
-interface AreaChartProps {
-  data: any[];
-  index: string;
+interface LineChartProps extends ChartProps {
   categories: string[];
+  index: string;
   colors?: string[];
   valueFormatter?: (value: number) => string;
-  showLegend?: boolean;
-  showGridLines?: boolean;
-  startEndOnly?: boolean;
-  className?: string;
+  yAxisWidth?: number;
 }
 
-export function AreaChart({
-  data,
-  index,
-  categories,
-  colors = ["#2563eb", "#f97316", "#8b5cf6", "#10b981"],
-  valueFormatter = (value) => `${value}`,
-  showLegend = true,
-  showGridLines = true,
-  startEndOnly = false,
-  className,
-}: AreaChartProps) {
-  const config = React.useMemo(() => {
-    return categories.reduce((acc, category, i) => {
-      acc[category] = {
-        label: category,
-        color: colors[i % colors.length],
-      };
-      return acc;
-    }, {} as Record<string, { label: string; color: string }>);
-  }, [categories, colors]);
-
-  return (
-    <ChartContainer config={config} className={className}>
-      <ComposedChart data={data}>
-        {showGridLines && <CartesianGrid strokeDasharray="3 3" />}
-        <XAxis
-          dataKey={index}
-          tickLine={false}
-          axisLine={false}
-          tickMargin={8}
-          tickFormatter={(value) => {
-            if (startEndOnly) {
-              const isFirstOrLast = value === data[0][index] || value === data[data.length - 1][index];
-              return isFirstOrLast ? value : "";
-            }
-            return value;
-          }}
-        />
-        <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={valueFormatter} />
-        <ChartTooltip
-          content={
-            <ChartTooltipContent 
-              valueFormatter={valueFormatter} 
-              indicator="line"
-            />
-          }
-        />
-        {categories.map((category, i) => (
-          <Area
-            key={category}
-            type="monotone"
-            dataKey={category}
-            stroke={colors[i % colors.length]}
-            fill={colors[i % colors.length]}
-            fillOpacity={0.2}
-            strokeWidth={2}
-            activeDot={{ r: 4, strokeWidth: 0 }}
-          />
-        ))}
-        {showLegend && (
-          <Legend
-            content={<ChartLegendContent payload={categories.map((category, i) => ({ 
-              value: category, 
-              color: colors[i % colors.length] 
-            }))} />}
-          />
-        )}
-      </ComposedChart>
-    </ChartContainer>
-  );
-}
-
-// BarChart component
-interface BarChartProps {
-  data: any[];
-  index: string;
+interface BarChartProps extends ChartProps {
   categories: string[];
+  index: string;
   colors?: string[];
   valueFormatter?: (value: number) => string;
-  showLegend?: boolean;
-  layout?: "horizontal" | "vertical";
-  className?: string;
+  yAxisWidth?: number;
 }
 
-export function BarChart({
-  data,
-  index,
-  categories,
-  colors = ["#2563eb", "#f97316", "#8b5cf6", "#10b981"],
-  valueFormatter = (value) => `${value}`,
-  showLegend = true,
-  layout = "horizontal",
-  className,
-}: BarChartProps) {
-  const config = React.useMemo(() => {
-    return categories.reduce((acc, category, i) => {
-      acc[category] = {
-        label: category,
-        color: colors[i % colors.length],
-      };
-      return acc;
-    }, {} as Record<string, { label: string; color: string }>);
-  }, [categories, colors]);
-
-  return (
-    <ChartContainer config={config} className={className}>
-      <ComposedChart data={data} layout={layout}>
-        <CartesianGrid strokeDasharray="3 3" />
-        {layout === "horizontal" ? (
-          <>
-            <XAxis
-              dataKey={index}
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-            />
-            <YAxis tickLine={false} axisLine={false} tickMargin={8} tickFormatter={valueFormatter} />
-          </>
-        ) : (
-          <>
-            <XAxis type="number" tickLine={false} axisLine={false} tickMargin={8} tickFormatter={valueFormatter} />
-            <YAxis dataKey={index} type="category" tickLine={false} axisLine={false} tickMargin={8} />
-          </>
-        )}
-        <ChartTooltip
-          content={
-            <ChartTooltipContent 
-              valueFormatter={valueFormatter} 
-              indicator="line"
-            />
-          }
-        />
-        {categories.map((category, i) => (
-          <Bar
-            key={category}
-            dataKey={category}
-            fill={colors[i % colors.length]}
-            radius={[4, 4, 0, 0]}
-            barSize={20}
-            stackId="stack"
-          />
-        ))}
-        {showLegend && (
-          <Legend
-            content={<ChartLegendContent payload={categories.map((category, i) => ({ 
-              value: category, 
-              color: colors[i % colors.length] 
-            }))} />}
-          />
-        )}
-      </ComposedChart>
-    </ChartContainer>
-  );
-}
-
-// PieChart component
-interface PieChartProps {
-  data: any[];
+interface AreaChartProps extends ChartProps {
+  categories: string[];
   index: string;
+  colors?: string[];
+  valueFormatter?: (value: number) => string;
+  yAxisWidth?: number;
+}
+
+interface PieChartProps extends ChartProps {
   category: string;
+  index: string;
+  colors?: string[];
   valueFormatter?: (value: number) => string;
-  showLabel?: boolean;
-  showLegend?: boolean;
-  className?: string;
 }
 
-export function PieChart({
+export const LineChart = ({
   data,
+  categories,
   index,
-  category,
-  valueFormatter = (value) => `${value}`,
-  showLabel = false,
-  showLegend = true,
+  colors = ["#2563eb", "#16a34a", "#ef4444", "#f59e0b"],
+  valueFormatter = (value: number) => `${value}`,
+  yAxisWidth = 40,
   className,
-}: PieChartProps) {
-  const config = React.useMemo(() => {
-    return data.reduce((acc, item) => {
-      acc[item[index]] = {
-        label: item[index],
-        color: item.fill || "#2563eb",
-      };
-      return acc;
-    }, {} as Record<string, { label: string; color: string }>);
-  }, [data, index]);
-
+  height = 400,
+  width,
+}: LineChartProps) => {
   return (
-    <ChartContainer config={config} className={className}>
-      <RechartsPieChart>
-        <Pie
-          data={data}
-          dataKey={category}
-          nameKey={index}
-          cx="50%"
-          cy="50%"
-          outerRadius={80}
-          fill="#8884d8"
-          label={showLabel ? ({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%` : false}
-        />
-        <ChartTooltip
-          content={
-            <ChartTooltipContent 
-              valueFormatter={valueFormatter} 
-              indicator="dot"
-            />
-          }
-        />
-        {showLegend && (
-          <Legend
-            content={<ChartLegendContent payload={data.map((item) => ({ 
-              value: item[index], 
-              color: item.fill 
-            }))} />}
+    <div className={className}>
+      <ResponsiveContainer width="100%" height={height}>
+        <RechartsLineChart data={data} margin={{ top: 20, right: 0, bottom: 0, left: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis
+            dataKey={index}
+            tick={{ fill: "#888888" }}
+            tickLine={{ stroke: "#888888" }}
+            axisLine={{ stroke: "#888888" }}
           />
-        )}
-      </RechartsPieChart>
-    </ChartContainer>
+          <YAxis
+            width={yAxisWidth}
+            tick={{ fill: "#888888" }}
+            tickLine={{ stroke: "#888888" }}
+            axisLine={{ stroke: "#888888" }}
+            domain={["auto", "auto"]}
+            tickFormatter={valueFormatter}
+          />
+          <Tooltip
+            formatter={valueFormatter}
+            labelFormatter={(value) => `${value}`}
+            contentStyle={{
+              backgroundColor: "white",
+              border: "1px solid #e5e7eb",
+              borderRadius: "0.375rem",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+            }}
+          />
+          <Legend />
+          {categories.map((category, index) => (
+            <Line
+              key={category}
+              type="monotone"
+              dataKey={category}
+              stroke={colors[index % colors.length]}
+              activeDot={{ r: 8 }}
+            />
+          ))}
+        </RechartsLineChart>
+      </ResponsiveContainer>
+    </div>
   );
-}
+};
+
+export const BarChart = ({
+  data,
+  categories,
+  index,
+  colors = ["#2563eb", "#16a34a", "#ef4444", "#f59e0b"],
+  valueFormatter = (value: number) => `${value}`,
+  yAxisWidth = 40,
+  className,
+  height = 400,
+  width,
+}: BarChartProps) => {
+  return (
+    <div className={className}>
+      <ResponsiveContainer width="100%" height={height}>
+        <RechartsBarChart data={data} margin={{ top: 20, right: 0, bottom: 0, left: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis
+            dataKey={index}
+            tick={{ fill: "#888888" }}
+            tickLine={{ stroke: "#888888" }}
+            axisLine={{ stroke: "#888888" }}
+          />
+          <YAxis
+            width={yAxisWidth}
+            tick={{ fill: "#888888" }}
+            tickLine={{ stroke: "#888888" }}
+            axisLine={{ stroke: "#888888" }}
+            domain={["auto", "auto"]}
+            tickFormatter={valueFormatter}
+          />
+          <Tooltip
+            formatter={valueFormatter}
+            labelFormatter={(value) => `${value}`}
+            contentStyle={{
+              backgroundColor: "white",
+              border: "1px solid #e5e7eb",
+              borderRadius: "0.375rem",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+            }}
+          />
+          <Legend />
+          {categories.map((category, index) => (
+            <Bar
+              key={category}
+              dataKey={category}
+              fill={colors[index % colors.length]}
+            />
+          ))}
+        </RechartsBarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
+export const AreaChart = ({
+  data,
+  categories,
+  index,
+  colors = ["#2563eb", "#16a34a", "#ef4444", "#f59e0b"],
+  valueFormatter = (value: number) => `${value}`,
+  yAxisWidth = 40,
+  className,
+  height = 400,
+  width,
+}: AreaChartProps) => {
+  return (
+    <div className={className}>
+      <ResponsiveContainer width="100%" height={height}>
+        <RechartsAreaChart data={data} margin={{ top: 20, right: 0, bottom: 0, left: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis
+            dataKey={index}
+            tick={{ fill: "#888888" }}
+            tickLine={{ stroke: "#888888" }}
+            axisLine={{ stroke: "#888888" }}
+          />
+          <YAxis
+            width={yAxisWidth}
+            tick={{ fill: "#888888" }}
+            tickLine={{ stroke: "#888888" }}
+            axisLine={{ stroke: "#888888" }}
+            domain={["auto", "auto"]}
+            tickFormatter={valueFormatter}
+          />
+          <Tooltip
+            formatter={valueFormatter}
+            labelFormatter={(value) => `${value}`}
+            contentStyle={{
+              backgroundColor: "white",
+              border: "1px solid #e5e7eb",
+              borderRadius: "0.375rem",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+            }}
+          />
+          <Legend />
+          {categories.map((category, index) => (
+            <Area
+              key={category}
+              type="monotone"
+              dataKey={category}
+              fill={colors[index % colors.length]}
+              stroke={colors[index % colors.length]}
+              fillOpacity={0.3}
+            />
+          ))}
+        </RechartsAreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
+export const PieChart = ({
+  data,
+  category,
+  index,
+  colors = ["#2563eb", "#16a34a", "#ef4444", "#f59e0b", "#a855f7", "#ec4899", "#14b8a6", "#64748b"],
+  valueFormatter = (value: number) => `${value}`,
+  className,
+  height = 400,
+  width,
+}: PieChartProps) => {
+  return (
+    <div className={className}>
+      <ResponsiveContainer width="100%" height={height}>
+        <RechartsPieChart>
+          <Pie
+            data={data}
+            nameKey={index}
+            dataKey={category}
+            cx="50%"
+            cy="50%"
+            outerRadius={130}
+            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+          >
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+            ))}
+          </Pie>
+          <Tooltip
+            formatter={valueFormatter}
+            contentStyle={{
+              backgroundColor: "white",
+              border: "1px solid #e5e7eb",
+              borderRadius: "0.375rem",
+              boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+            }}
+          />
+          <Legend />
+        </RechartsPieChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
