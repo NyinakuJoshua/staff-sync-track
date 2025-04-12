@@ -12,6 +12,7 @@ import { toast } from "sonner";
 
 interface StaffMember {
   id: number;
+  staffId: string;
   name: string;
   email: string;
   position: string;
@@ -21,44 +22,7 @@ interface StaffMember {
 }
 
 const StaffPage = () => {
-  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([
-    {
-      id: 1,
-      name: "John Smith",
-      email: "jsmith@school.edu",
-      position: "Math Teacher",
-      department: "Mathematics",
-      phone: "(555) 123-4567",
-      status: "active",
-    },
-    {
-      id: 2,
-      name: "Sarah Johnson",
-      email: "sjohnson@school.edu",
-      position: "Science Teacher",
-      department: "Science",
-      phone: "(555) 234-5678",
-      status: "active",
-    },
-    {
-      id: 3,
-      name: "Michael Brown",
-      email: "mbrown@school.edu",
-      position: "History Teacher",
-      department: "Humanities",
-      phone: "(555) 345-6789",
-      status: "active",
-    },
-    {
-      id: 4,
-      name: "Emily Davis",
-      email: "edavis@school.edu",
-      position: "English Teacher",
-      department: "English",
-      phone: "(555) 456-7890",
-      status: "active",
-    },
-  ]);
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
 
   const [newStaff, setNewStaff] = useState({
     name: "",
@@ -86,14 +50,24 @@ const StaffPage = () => {
       return;
     }
 
+    // Generate staff ID (department prefix + sequential number)
+    const deptPrefix = newStaff.department.substring(0, 3).toUpperCase();
+    const existingDeptUsers = staffMembers.filter(staff => 
+      staff.department === newStaff.department || 
+      (staff.staffId && staff.staffId.startsWith(deptPrefix))
+    );
+    const newStaffNumber = (existingDeptUsers.length + 1).toString().padStart(3, '0');
+    const staffId = `${deptPrefix}${newStaffNumber}`;
+
     const newStaffMember = {
       id: staffMembers.length > 0 ? Math.max(...staffMembers.map(s => s.id)) + 1 : 1,
+      staffId,
       ...newStaff,
       status: "active"
     };
 
     setStaffMembers([...staffMembers, newStaffMember]);
-    toast.success(`${newStaff.name} has been added to staff`);
+    toast.success(`${newStaff.name} has been added to staff with ID: ${staffId}`);
     
     // Reset form
     setNewStaff({
@@ -119,7 +93,8 @@ const StaffPage = () => {
     staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     staff.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
     staff.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    staff.position.toLowerCase().includes(searchTerm.toLowerCase())
+    staff.position.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    staff.staffId.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const departments = ["Mathematics", "Science", "Humanities", "English", "Physical Education", "Fine Arts", "Technology"];
@@ -259,6 +234,7 @@ const StaffPage = () => {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Staff ID</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Position</TableHead>
@@ -270,6 +246,7 @@ const StaffPage = () => {
               <TableBody>
                 {filteredStaff.map((staff) => (
                   <TableRow key={staff.id}>
+                    <TableCell className="font-mono">{staff.staffId}</TableCell>
                     <TableCell className="font-medium">{staff.name}</TableCell>
                     <TableCell>{staff.email}</TableCell>
                     <TableCell>{staff.position}</TableCell>
@@ -290,7 +267,7 @@ const StaffPage = () => {
             </Table>
           ) : (
             <div className="flex items-center justify-center h-40">
-              <p className="text-muted-foreground">No staff members found.</p>
+              <p className="text-muted-foreground">No staff members found. Add new staff members to get started.</p>
             </div>
           )}
         </CardContent>

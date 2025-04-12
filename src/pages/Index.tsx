@@ -13,10 +13,14 @@ import { toast } from "sonner";
 
 interface User {
   id: number;
+  staffId: string;
   email: string;
   name: string;
   role: 'admin' | 'staff';
   password: string;
+  department?: string;
+  position?: string;
+  dob?: string;
 }
 
 const Index = () => {
@@ -24,9 +28,7 @@ const Index = () => {
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([
-    { id: 1, email: "admin@school.edu", password: "password", name: "Admin User", role: "admin" },
-    { id: 2, email: "jsmith@school.edu", password: "password", name: "John Smith", role: "staff" },
-    { id: 3, email: "sjohnson@school.edu", password: "password", name: "Sarah Johnson", role: "staff" },
+    { id: 1, staffId: "ADMIN001", email: "admin@school.edu", password: "password", name: "Admin User", role: "admin" },
   ]);
 
   // Check if currentUser has access to a page
@@ -53,16 +55,49 @@ const Index = () => {
     }
   }, [currentPage, currentUser]);
 
-  const handleLogin = (email: string, password: string) => {
-    const user = users.find(u => u.email === email && u.password === password);
+  const handleLogin = (staffId: string, email: string, password: string) => {
+    const user = users.find(u => u.staffId === staffId && u.email === email && u.password === password);
     
     if (user) {
       setCurrentUser(user);
       setIsAuthenticated(true);
       toast.success(`Welcome back, ${user.name}!`);
     } else {
-      toast.error("Invalid email or password");
+      toast.error("Invalid staff ID, email or password");
     }
+  };
+
+  const handleSignup = (name: string, email: string, password: string, department: string, position: string, dob: string) => {
+    // Check if email already exists
+    if (users.some(user => user.email === email)) {
+      toast.error("Email already exists");
+      return;
+    }
+    
+    // Generate staff ID (department prefix + sequential number)
+    const deptPrefix = department.substring(0, 3).toUpperCase();
+    const existingDeptUsers = users.filter(user => 
+      user.department === department || 
+      (user.staffId && user.staffId.startsWith(deptPrefix))
+    );
+    const newStaffNumber = (existingDeptUsers.length + 1).toString().padStart(3, '0');
+    const staffId = `${deptPrefix}${newStaffNumber}`;
+    
+    // Create new user
+    const newUser: User = {
+      id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
+      staffId,
+      email,
+      password,
+      name,
+      role: 'staff',
+      department,
+      position,
+      dob
+    };
+    
+    setUsers([...users, newUser]);
+    toast.success(`Account created successfully! Your Staff ID is: ${staffId}`);
   };
 
   const handleLogout = () => {
@@ -164,13 +199,11 @@ const Index = () => {
                 Employee Attendance Management System
               </p>
             </div>
-            <LoginForm onLogin={handleLogin} />
+            <LoginForm onLogin={handleLogin} onSignup={handleSignup} />
             <div className="mt-6 p-4 bg-muted rounded-md">
               <h3 className="font-medium mb-2">Available Login Credentials:</h3>
               <ul className="space-y-2 text-sm">
-                <li><strong>Admin:</strong> admin@school.edu / password</li>
-                <li><strong>Staff:</strong> jsmith@school.edu / password</li>
-                <li><strong>Staff:</strong> sjohnson@school.edu / password</li>
+                <li><strong>Admin:</strong> ADMIN001 / admin@school.edu / password</li>
               </ul>
             </div>
           </div>
