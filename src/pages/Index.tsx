@@ -302,7 +302,7 @@ const Index = () => {
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-primary">Staff Sync Track</h1>
               <p className="text-muted-foreground mt-2">
-                Employee Attendance Management System
+                Staff Login and Log Out Management System
               </p>
             </div>
             <LoginForm onLogin={handleLogin} onSignup={handleSignup} />
