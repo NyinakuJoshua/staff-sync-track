@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -7,8 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusIcon, TrashIcon, UserIcon } from "lucide-react";
+import { PlusIcon, TrashIcon, UserIcon, EyeIcon, EyeOffIcon } from "lucide-react";
 import { toast } from "sonner";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 interface StaffMember {
   id: number;
@@ -17,43 +21,45 @@ interface StaffMember {
   email: string;
   position: string;
   department: string;
-  phone: string;
+  gender: string;
+  dob: string;
   status: string;
 }
 
+const staffSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email"),
+  position: z.string().min(1, "Please select a position"),
+  department: z.string().min(1, "Please select a department"),
+  gender: z.string().min(1, "Please select gender"),
+  dob: z.string().min(1, "Please enter date of birth"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
+
 const StaffPage = () => {
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
-
-  const [newStaff, setNewStaff] = useState({
-    name: "",
-    email: "",
-    position: "",
-    department: "",
-    phone: "",
-  });
-
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewStaff((prev) => ({ ...prev, [name]: value }));
-  };
+  const form = useForm<z.infer<typeof staffSchema>>({
+    resolver: zodResolver(staffSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      position: "",
+      department: "",
+      gender: "",
+      dob: "",
+      password: "",
+    },
+  });
 
-  const handleSelectChange = (name: string, value: string) => {
-    setNewStaff((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleAddStaff = () => {
-    if (!newStaff.name || !newStaff.email || !newStaff.position || !newStaff.department) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
+  const handleAddStaff = (values: z.infer<typeof staffSchema>) => {
     // Generate staff ID (department prefix + sequential number)
-    const deptPrefix = newStaff.department.substring(0, 3).toUpperCase();
+    const deptPrefix = values.department.substring(0, 3).toUpperCase();
     const existingDeptUsers = staffMembers.filter(staff => 
-      staff.department === newStaff.department || 
+      staff.department === values.department || 
       (staff.staffId && staff.staffId.startsWith(deptPrefix))
     );
     const newStaffNumber = (existingDeptUsers.length + 1).toString().padStart(3, '0');
@@ -62,22 +68,20 @@ const StaffPage = () => {
     const newStaffMember = {
       id: staffMembers.length > 0 ? Math.max(...staffMembers.map(s => s.id)) + 1 : 1,
       staffId,
-      ...newStaff,
+      name: values.name,
+      email: values.email,
+      position: values.position,
+      department: values.department,
+      gender: values.gender,
+      dob: values.dob,
       status: "active"
     };
 
     setStaffMembers([...staffMembers, newStaffMember]);
-    toast.success(`${newStaff.name} has been added to staff with ID: ${staffId}`);
+    toast.success(`${values.name} has been added to staff with ID: ${staffId}`);
     
     // Reset form
-    setNewStaff({
-      name: "",
-      email: "",
-      position: "",
-      department: "",
-      phone: "",
-    });
-    
+    form.reset();
     setIsAddStaffOpen(false);
   };
 
@@ -128,96 +132,168 @@ const StaffPage = () => {
               Add Staff Member
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Add New Staff Member</DialogTitle>
               <DialogDescription>
                 Enter the details of the new staff member.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
-                <Input
-                  id="name"
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleAddStaff)} className="space-y-4">
+                <FormField
+                  control={form.control}
                   name="name"
-                  value={newStaff.name}
-                  onChange={handleInputChange}
-                  className="col-span-3"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="John Doe" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
-                  Email
-                </Label>
-                <Input
-                  id="email"
+                
+                <FormField
+                  control={form.control}
                   name="email"
-                  type="email"
-                  value={newStaff.email}
-                  onChange={handleInputChange}
-                  className="col-span-3"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="email@example.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="position" className="text-right">
-                  Position
-                </Label>
-                <Select 
-                  value={newStaff.position} 
-                  onValueChange={(value) => handleSelectChange("position", value)}
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select position" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {positions.map((position) => (
-                      <SelectItem key={position} value={position}>
-                        {position}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="department" className="text-right">
-                  Department
-                </Label>
-                <Select 
-                  value={newStaff.department} 
-                  onValueChange={(value) => handleSelectChange("department", value)}
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map((department) => (
-                      <SelectItem key={department} value={department}>
-                        {department}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="phone" className="text-right">
-                  Phone
-                </Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  value={newStaff.phone}
-                  onChange={handleInputChange}
-                  className="col-span-3"
+                
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input 
+                            type={showPassword ? "text" : "password"} 
+                            placeholder="******" 
+                            {...field} 
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            className="absolute right-3 top-3"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <EyeOffIcon className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                              <EyeIcon className="h-4 w-4 text-muted-foreground" />
+                            )}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddStaffOpen(false)}>Cancel</Button>
-              <Button onClick={handleAddStaff}>Add Staff</Button>
-            </DialogFooter>
+                
+                <FormField
+                  control={form.control}
+                  name="department"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Department</FormLabel>
+                      <FormControl>
+                        <select 
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          {...field}
+                        >
+                          <option value="">Select department</option>
+                          {departments.map((dept) => (
+                            <option key={dept} value={dept}>
+                              {dept}
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="position"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Position</FormLabel>
+                      <FormControl>
+                        <select 
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          {...field}
+                        >
+                          <option value="">Select position</option>
+                          {positions.map((pos) => (
+                            <option key={pos} value={pos}>
+                              {pos}
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gender</FormLabel>
+                      <FormControl>
+                        <select 
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                          {...field}
+                        >
+                          <option value="">Select gender</option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                          <option value="prefer-not-to-say">Prefer not to say</option>
+                        </select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="dob"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date of Birth</FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <DialogFooter className="mt-6">
+                  <Button type="button" variant="outline" onClick={() => setIsAddStaffOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit">Add Staff</Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>
@@ -239,7 +315,8 @@ const StaffPage = () => {
                   <TableHead>Email</TableHead>
                   <TableHead>Position</TableHead>
                   <TableHead>Department</TableHead>
-                  <TableHead>Phone</TableHead>
+                  <TableHead>Gender</TableHead>
+                  <TableHead>Date of Birth</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -251,7 +328,8 @@ const StaffPage = () => {
                     <TableCell>{staff.email}</TableCell>
                     <TableCell>{staff.position}</TableCell>
                     <TableCell>{staff.department}</TableCell>
-                    <TableCell>{staff.phone}</TableCell>
+                    <TableCell>{staff.gender}</TableCell>
+                    <TableCell>{new Date(staff.dob).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <Button
                         variant="destructive"

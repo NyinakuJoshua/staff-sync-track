@@ -20,12 +20,22 @@ interface User {
   gender?: string;
 }
 
-interface DashboardPageProps {
-  users: User[];
-  attendanceRecords: any[];
+interface AttendanceRecord {
+  id: number;
+  userId: number;
+  date: string;
+  checkIn?: string;
+  checkOut?: string;
+  status: 'present' | 'absent' | 'late' | 'leave';
+  note?: string;
 }
 
-const DashboardPage = ({ users, attendanceRecords = [] }: DashboardPageProps) => {
+interface DashboardPageProps {
+  users: User[];
+  attendanceRecords: AttendanceRecord[];
+}
+
+const DashboardPage = ({ users, attendanceRecords }: DashboardPageProps) => {
   const currentDate = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -36,22 +46,15 @@ const DashboardPage = ({ users, attendanceRecords = [] }: DashboardPageProps) =>
   // Calculate staff statistics from real data
   const totalStaff = users.length;
   
-  // For demonstration purposes, let's simulate attendance data
-  // In a real app, this would come from actual attendance records
-  const presentToday = attendanceRecords.filter(record => 
-    record.status === 'present' && 
-    new Date(record.date).toDateString() === new Date().toDateString()
-  ).length;
+  // Get today's attendance
+  const todayString = new Date().toISOString().split('T')[0];
+  const todayRecords = attendanceRecords.filter(record => 
+    record.date.split('T')[0] === todayString
+  );
   
-  const lateCheckIns = attendanceRecords.filter(record => 
-    record.status === 'late' && 
-    new Date(record.date).toDateString() === new Date().toDateString()
-  ).length;
-  
-  const onLeave = attendanceRecords.filter(record => 
-    record.status === 'leave' && 
-    new Date(record.date).toDateString() === new Date().toDateString()
-  ).length;
+  const presentToday = todayRecords.filter(record => record.status === 'present').length;
+  const lateCheckIns = todayRecords.filter(record => record.status === 'late').length;
+  const onLeave = todayRecords.filter(record => record.status === 'leave').length;
 
   const attendanceRate = totalStaff > 0 ? Math.round((presentToday / totalStaff) * 100) : 0;
 

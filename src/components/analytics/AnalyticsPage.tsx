@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -6,11 +7,59 @@ import { AreaChart, BarChart, LineChart, PieChart } from "@/components/ui/charts
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ChartBarIcon, ArrowUpIcon, ArrowDownIcon, ClockIcon, CalendarIcon } from "lucide-react";
 
-const AnalyticsPage = () => {
+interface AnalyticsPageProps {
+  attendanceRecords?: any[];
+}
+
+const AnalyticsPage = ({ attendanceRecords = [] }: AnalyticsPageProps) => {
   const [timePeriod, setTimePeriod] = useState("month");
   const [department, setDepartment] = useState("all");
+  const [stats, setStats] = useState({
+    attendanceRate: 0,
+    lateRate: 0,
+    absenceRate: 0,
+    avgWorkingHours: 0,
+    attendanceChange: 0,
+    lateChange: 0,
+    absenceChange: 0
+  });
 
-  // Sample data for charts
+  // Calculate statistics based on attendance records
+  useEffect(() => {
+    if (attendanceRecords.length > 0) {
+      // For real implementation, this would calculate from actual data
+      const attendanceRate = Math.round(attendanceRecords.filter(r => r.status === 'present').length / attendanceRecords.length * 100);
+      const lateRate = Math.round(attendanceRecords.filter(r => r.status === 'late').length / attendanceRecords.length * 100);
+      const absenceRate = Math.round((attendanceRecords.filter(r => r.status === 'absent').length + 
+        attendanceRecords.filter(r => r.status === 'leave').length) / attendanceRecords.length * 100);
+      
+      // Calculate average working hours (assuming 8-hour workday)
+      let totalHours = 0;
+      let recordsWithHours = 0;
+      
+      attendanceRecords.forEach(record => {
+        if (record.checkIn && record.checkOut) {
+          // In a real system, you'd calculate actual hours
+          totalHours += 7.8; // For example purposes
+          recordsWithHours++;
+        }
+      });
+      
+      const avgWorkingHours = recordsWithHours > 0 ? (totalHours / recordsWithHours).toFixed(1) : "0";
+      
+      setStats({
+        attendanceRate,
+        lateRate,
+        absenceRate,
+        avgWorkingHours: parseFloat(avgWorkingHours),
+        attendanceChange: 2.5,  // These would be calculated from trend data
+        lateChange: -1.2,
+        absenceChange: 0.8
+      });
+    }
+  }, [attendanceRecords]);
+
+  // Sample data for charts - in a real app this would be generated from attendance data
   const monthlyAttendanceData = [
     { name: "Jan", present: 90, late: 8, absent: 2 },
     { name: "Feb", present: 88, late: 10, absent: 2 },
@@ -44,9 +93,9 @@ const AnalyticsPage = () => {
   ];
 
   const statusDistributionData = [
-    { name: "Present", value: 88, fill: "#4ade80" },
-    { name: "Late", value: 8, fill: "#facc15" },
-    { name: "Absent", value: 4, fill: "#f87171" },
+    { name: "Present", value: stats.attendanceRate, fill: "#4ade80" },
+    { name: "Late", value: stats.lateRate, fill: "#facc15" },
+    { name: "Absent", value: stats.absenceRate, fill: "#f87171" },
   ];
 
   const leaveTypesData = [
@@ -118,31 +167,31 @@ const AnalyticsPage = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Average Attendance Rate</CardTitle>
-            <ArrowUpIcon className="h-4 w-4 text-green-500" />
+            <ArrowUpIcon className={`h-4 w-4 ${stats.attendanceChange >= 0 ? 'text-green-500' : 'text-red-500'}`} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">88%</div>
-            <p className="text-xs text-muted-foreground">+2.5% from previous period</p>
+            <div className="text-2xl font-bold">{stats.attendanceRate}%</div>
+            <p className="text-xs text-muted-foreground">{stats.attendanceChange >= 0 ? '+' : ''}{stats.attendanceChange}% from previous period</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Late Arrival Rate</CardTitle>
-            <ArrowDownIcon className="h-4 w-4 text-green-500" />
+            <ArrowDownIcon className={`h-4 w-4 ${stats.lateChange <= 0 ? 'text-green-500' : 'text-red-500'}`} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8%</div>
-            <p className="text-xs text-muted-foreground">-1.2% from previous period</p>
+            <div className="text-2xl font-bold">{stats.lateRate}%</div>
+            <p className="text-xs text-muted-foreground">{stats.lateChange >= 0 ? '+' : ''}{stats.lateChange}% from previous period</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Absence Rate</CardTitle>
-            <ArrowUpIcon className="h-4 w-4 text-red-500" />
+            <ArrowUpIcon className={`h-4 w-4 ${stats.absenceChange <= 0 ? 'text-green-500' : 'text-red-500'}`} />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">4%</div>
-            <p className="text-xs text-muted-foreground">+0.8% from previous period</p>
+            <div className="text-2xl font-bold">{stats.absenceRate}%</div>
+            <p className="text-xs text-muted-foreground">{stats.absenceChange >= 0 ? '+' : ''}{stats.absenceChange}% from previous period</p>
           </CardContent>
         </Card>
         <Card>
@@ -151,7 +200,7 @@ const AnalyticsPage = () => {
             <ClockIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">7.8 hrs</div>
+            <div className="text-2xl font-bold">{stats.avgWorkingHours} hrs</div>
             <p className="text-xs text-muted-foreground">Standard: 8 hrs</p>
           </CardContent>
         </Card>

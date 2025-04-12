@@ -28,7 +28,7 @@ interface AttendanceRecord {
   id: number;
   userId: number;
   date: string;
-  checkIn: string;
+  checkIn?: string;
   checkOut?: string;
   status: 'present' | 'absent' | 'late' | 'leave';
   note?: string;
@@ -40,6 +40,50 @@ const Index = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+
+  // Initialize attendance records with sample data
+  useEffect(() => {
+    // This would normally come from an API or database
+    const sampleAttendanceRecords = [
+      {
+        id: 1,
+        userId: 1,
+        date: "2025-04-12",
+        checkIn: "08:15:00",
+        checkOut: "16:30:00",
+        status: "present" as const,
+      },
+      {
+        id: 2,
+        userId: 2,
+        date: "2025-04-12",
+        checkIn: "09:10:00",
+        checkOut: "16:20:00",
+        status: "late" as const,
+      },
+      {
+        id: 3,
+        userId: 3,
+        date: "2025-04-12",
+        status: "absent" as const,
+      },
+    ];
+    
+    setAttendanceRecords(sampleAttendanceRecords);
+    
+    // Try to restore saved users from localStorage
+    const savedUsers = localStorage.getItem('staffSyncUsers');
+    if (savedUsers) {
+      setUsers(JSON.parse(savedUsers));
+    }
+  }, []);
+
+  // Save users to localStorage whenever they change
+  useEffect(() => {
+    if (users.length > 0) {
+      localStorage.setItem('staffSyncUsers', JSON.stringify(users));
+    }
+  }, [users]);
 
   // Check if currentUser has access to a page
   const hasAccess = (page: string) => {
@@ -217,7 +261,7 @@ const Index = () => {
       case "reports":
         return <ReportsPage />;
       case "analytics":
-        return <AnalyticsPage />;
+        return <AnalyticsPage attendanceRecords={attendanceRecords} />;
       case "profile":
         return currentUser ? (
           <ProfilePage 
@@ -243,6 +287,11 @@ const Index = () => {
           <div className="mb-4 border-b pb-2">
             <div className="text-sm text-muted-foreground">
               Logged in as: <span className="font-medium">{currentUser?.name}</span> ({currentUser?.role.charAt(0).toUpperCase() + currentUser?.role.slice(1)})
+              {currentUser?.staffId && (
+                <span className="ml-2 font-mono text-xs bg-gray-100 px-2 py-0.5 rounded">
+                  ID: {currentUser.staffId}
+                </span>
+              )}
             </div>
           </div>
           {renderPage()}

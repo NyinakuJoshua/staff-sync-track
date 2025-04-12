@@ -34,7 +34,7 @@ const Sidebar = ({ onPageChange, onLogout, currentPage, userRole }: SidebarProps
       items.push({ id: "dashboard", icon: HomeIcon, label: "Dashboard" });
     }
     
-    // All users can access attendance and calendar
+    // All users can access attendance
     items.push({ id: "attendance", icon: ClipboardCheckIcon, label: "Attendance" });
     
     // Only admin can view staff management
@@ -42,6 +42,7 @@ const Sidebar = ({ onPageChange, onLogout, currentPage, userRole }: SidebarProps
       items.push({ id: "staff", icon: UsersIcon, label: "Staff" });
     }
     
+    // All users can access calendar
     items.push({ id: "calendar", icon: CalendarIcon, label: "Calendar" });
     
     // Only admin can view reports and analytics
