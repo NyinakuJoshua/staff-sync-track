@@ -8,6 +8,11 @@ interface User {
   name: string;
   role: 'admin' | 'staff';
   password: string;
+  staffId: string;
+  department?: string;
+  position?: string;
+  dob?: string;
+  gender?: string;
 }
 
 interface AppLayoutProps {
@@ -40,6 +45,7 @@ const AppLayout = ({ children, currentPage, onPageChange, onLogout, currentUser 
         onPageChange={onPageChange} 
         onLogout={onLogout} 
         currentPage={currentPage} 
+        userRole={currentUser?.role || 'staff'} 
       />
       <main className="flex-1 overflow-auto bg-gray-50">
         <div className="container py-6">

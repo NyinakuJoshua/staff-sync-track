@@ -19,20 +19,44 @@ interface SidebarProps {
   onPageChange: (page: string) => void;
   onLogout: () => void;
   currentPage: string;
+  userRole: 'admin' | 'staff';
 }
 
-const Sidebar = ({ onPageChange, onLogout, currentPage }: SidebarProps) => {
+const Sidebar = ({ onPageChange, onLogout, currentPage, userRole }: SidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
 
-  const menuItems = [
-    { id: "dashboard", icon: HomeIcon, label: "Dashboard" },
-    { id: "attendance", icon: ClipboardCheckIcon, label: "Attendance" },
-    { id: "staff", icon: UsersIcon, label: "Staff" },
-    { id: "calendar", icon: CalendarIcon, label: "Calendar" },
-    { id: "reports", icon: FileTextIcon, label: "Reports" },
-    { id: "analytics", icon: PieChartIcon, label: "Analytics" },
-    { id: "profile", icon: UserIcon, label: "Profile" },
-  ];
+  // Define menu items based on user role
+  const getMenuItems = () => {
+    const items = [];
+    
+    // Only admin can view dashboard
+    if (userRole === 'admin') {
+      items.push({ id: "dashboard", icon: HomeIcon, label: "Dashboard" });
+    }
+    
+    // All users can access attendance and calendar
+    items.push({ id: "attendance", icon: ClipboardCheckIcon, label: "Attendance" });
+    
+    // Only admin can view staff management
+    if (userRole === 'admin') {
+      items.push({ id: "staff", icon: UsersIcon, label: "Staff" });
+    }
+    
+    items.push({ id: "calendar", icon: CalendarIcon, label: "Calendar" });
+    
+    // Only admin can view reports and analytics
+    if (userRole === 'admin') {
+      items.push({ id: "reports", icon: FileTextIcon, label: "Reports" });
+      items.push({ id: "analytics", icon: PieChartIcon, label: "Analytics" });
+    }
+    
+    // All users can access their profile
+    items.push({ id: "profile", icon: UserIcon, label: "Profile" });
+    
+    return items;
+  };
+
+  const menuItems = getMenuItems();
 
   return (
     <div

@@ -21,15 +21,25 @@ interface User {
   department?: string;
   position?: string;
   dob?: string;
+  gender?: string;
+}
+
+interface AttendanceRecord {
+  id: number;
+  userId: number;
+  date: string;
+  checkIn: string;
+  checkOut?: string;
+  status: 'present' | 'absent' | 'late' | 'leave';
+  note?: string;
 }
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>([
-    { id: 1, staffId: "ADMIN001", email: "admin@school.edu", password: "password", name: "Admin User", role: "admin" },
-  ]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
 
   // Check if currentUser has access to a page
   const hasAccess = (page: string) => {
@@ -40,7 +50,7 @@ const Index = () => {
     }
     
     // Staff access limitations
-    if (['staff', 'analytics', 'reports'].includes(page)) {
+    if (['staff', 'analytics', 'reports', 'dashboard'].includes(page)) {
       return false;
     }
     
@@ -48,9 +58,9 @@ const Index = () => {
   };
 
   useEffect(() => {
-    // If user doesn't have access to current page, redirect to dashboard
+    // If user doesn't have access to current page, redirect to attendance
     if (isAuthenticated && !hasAccess(currentPage)) {
-      setCurrentPage('dashboard');
+      setCurrentPage('attendance');
       toast.error("You don't have access to that page");
     }
   }, [currentPage, currentUser]);
@@ -62,26 +72,37 @@ const Index = () => {
       setCurrentUser(user);
       setIsAuthenticated(true);
       toast.success(`Welcome back, ${user.name}!`);
+      setCurrentPage(user.role === 'admin' ? 'dashboard' : 'attendance');
     } else {
       toast.error("Invalid staff ID, email or password");
     }
   };
 
-  const handleSignup = (name: string, email: string, password: string, department: string, position: string, dob: string) => {
+  const handleSignup = (name: string, email: string, password: string, role: 'admin' | 'staff', department: string, position: string, dob: string, gender: string) => {
     // Check if email already exists
     if (users.some(user => user.email === email)) {
       toast.error("Email already exists");
       return;
     }
     
-    // Generate staff ID (department prefix + sequential number)
-    const deptPrefix = department.substring(0, 3).toUpperCase();
-    const existingDeptUsers = users.filter(user => 
-      user.department === department || 
-      (user.staffId && user.staffId.startsWith(deptPrefix))
-    );
-    const newStaffNumber = (existingDeptUsers.length + 1).toString().padStart(3, '0');
-    const staffId = `${deptPrefix}${newStaffNumber}`;
+    // Generate staff ID
+    let staffId = '';
+    
+    if (role === 'admin') {
+      // For admin, use ADMIN prefix
+      const existingAdmins = users.filter(user => user.role === 'admin');
+      const newAdminNumber = (existingAdmins.length + 1).toString().padStart(3, '0');
+      staffId = `ADMIN${newAdminNumber}`;
+    } else {
+      // For staff, use department prefix
+      const deptPrefix = department.substring(0, 3).toUpperCase();
+      const existingDeptUsers = users.filter(user => 
+        user.department === department || 
+        (user.staffId && user.staffId.startsWith(deptPrefix))
+      );
+      const newStaffNumber = (existingDeptUsers.length + 1).toString().padStart(3, '0');
+      staffId = `${deptPrefix}${newStaffNumber}`;
+    }
     
     // Create new user
     const newUser: User = {
@@ -90,10 +111,11 @@ const Index = () => {
       email,
       password,
       name,
-      role: 'staff',
-      department,
-      position,
-      dob
+      role,
+      department: role === 'staff' ? department : undefined,
+      position: role === 'staff' ? position : undefined,
+      dob,
+      gender
     };
     
     setUsers([...users, newUser]);
@@ -108,7 +130,7 @@ const Index = () => {
   };
 
   const handleUpdateCredentials = (currentPassword: string, newPassword: string, newEmail: string, newName: string) => {
-    if (!currentUser) return;
+    if (!currentUser) return false;
     
     // Verify current password
     if (currentPassword !== currentUser.password) {
@@ -139,7 +161,36 @@ const Index = () => {
       name: newName || currentUser.name
     });
     
-    toast.success("Profile updated successfully");
+    toast.success("Credentials updated successfully");
+    return true;
+  };
+  
+  const handleUpdateProfile = (department?: string, position?: string, gender?: string) => {
+    if (!currentUser) return false;
+    
+    // Update user in the users array
+    const updatedUsers = users.map(user => {
+      if (user.id === currentUser.id) {
+        return {
+          ...user,
+          department: department || user.department,
+          position: position || user.position,
+          gender: gender || user.gender
+        };
+      }
+      return user;
+    });
+    
+    setUsers(updatedUsers);
+    
+    // Update current user
+    setCurrentUser({
+      ...currentUser,
+      department: department || currentUser.department,
+      position: position || currentUser.position,
+      gender: gender || currentUser.gender
+    });
+    
     return true;
   };
 
@@ -156,7 +207,7 @@ const Index = () => {
     
     switch (currentPage) {
       case "dashboard":
-        return <DashboardPage />;
+        return <DashboardPage users={users} attendanceRecords={attendanceRecords} />;
       case "attendance":
         return <AttendancePage />;
       case "staff":
@@ -168,9 +219,15 @@ const Index = () => {
       case "analytics":
         return <AnalyticsPage />;
       case "profile":
-        return currentUser ? <ProfilePage user={currentUser} onUpdateCredentials={handleUpdateCredentials} /> : null;
+        return currentUser ? (
+          <ProfilePage 
+            user={currentUser} 
+            onUpdateCredentials={handleUpdateCredentials} 
+            onUpdateProfile={handleUpdateProfile} 
+          />
+        ) : null;
       default:
-        return <DashboardPage />;
+        return <DashboardPage users={users} attendanceRecords={attendanceRecords} />;
     }
   };
 
@@ -200,12 +257,6 @@ const Index = () => {
               </p>
             </div>
             <LoginForm onLogin={handleLogin} onSignup={handleSignup} />
-            <div className="mt-6 p-4 bg-muted rounded-md">
-              <h3 className="font-medium mb-2">Available Login Credentials:</h3>
-              <ul className="space-y-2 text-sm">
-                <li><strong>Admin:</strong> ADMIN001 / admin@school.edu / password</li>
-              </ul>
-            </div>
           </div>
         </div>
       )}

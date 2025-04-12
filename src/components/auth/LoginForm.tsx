@@ -4,26 +4,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { EyeIcon, EyeOffIcon, LockIcon, LogInIcon, MailIcon, UserIcon, UserPlusIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon, LockIcon, LogInIcon, MailIcon, UserIcon, UserPlusIcon, IdCardIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface LoginFormProps {
   onLogin: (staffId: string, email: string, password: string) => void;
-  onSignup: (name: string, email: string, password: string, department: string, position: string, dob: string) => void;
+  onSignup: (name: string, email: string, password: string, role: 'admin' | 'staff', department: string, position: string, dob: string, gender: string) => void;
 }
 
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  department: z.string().min(1, "Please select a department"),
-  position: z.string().min(1, "Please select a position"),
+  role: z.enum(['admin', 'staff']),
+  department: z.string().optional(),
+  position: z.string().optional(),
   dob: z.string().min(1, "Please enter your date of birth"),
+  gender: z.string().min(1, "Please select your gender"),
 });
 
 const LoginForm = ({ onLogin, onSignup }: LoginFormProps) => {
@@ -40,9 +43,11 @@ const LoginForm = ({ onLogin, onSignup }: LoginFormProps) => {
       name: "",
       email: "",
       password: "",
+      role: 'staff',
       department: "",
       position: "",
       dob: "",
+      gender: "",
     },
   });
 
@@ -69,12 +74,23 @@ const LoginForm = ({ onLogin, onSignup }: LoginFormProps) => {
     // Simulate API call delay
     setTimeout(() => {
       setLoading(false);
-      onSignup(values.name, values.email, values.password, values.department, values.position, values.dob);
+      onSignup(
+        values.name, 
+        values.email, 
+        values.password, 
+        values.role,
+        values.department || "", 
+        values.position || "", 
+        values.dob,
+        values.gender
+      );
       setIsSignupOpen(false);
       form.reset();
     }, 1000);
   };
 
+  const watchRole = form.watch("role");
+  
   const departments = ["Mathematics", "Science", "Humanities", "English", "Physical Education", "Fine Arts", "Technology"];
   const positions = ["Teacher", "Department Head", "Administrator", "Support Staff", "Counselor"];
 
@@ -90,7 +106,7 @@ const LoginForm = ({ onLogin, onSignup }: LoginFormProps) => {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <div className="relative">
-              <UserIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <IdCardIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder="Staff ID"
@@ -163,7 +179,7 @@ const LoginForm = ({ onLogin, onSignup }: LoginFormProps) => {
                 Sign Up
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>Sign Up as New Staff Member</DialogTitle>
                 <DialogDescription>
@@ -185,6 +201,7 @@ const LoginForm = ({ onLogin, onSignup }: LoginFormProps) => {
                       </FormItem>
                     )}
                   />
+                  
                   <FormField
                     control={form.control}
                     name="email"
@@ -198,6 +215,7 @@ const LoginForm = ({ onLogin, onSignup }: LoginFormProps) => {
                       </FormItem>
                     )}
                   />
+                  
                   <FormField
                     control={form.control}
                     name="password"
@@ -229,52 +247,109 @@ const LoginForm = ({ onLogin, onSignup }: LoginFormProps) => {
                       </FormItem>
                     )}
                   />
+                  
                   <FormField
                     control={form.control}
-                    name="department"
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem className="space-y-1">
+                        <FormLabel>Role</FormLabel>
+                        <FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex flex-col space-y-1"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="admin" id="admin" />
+                              <Label htmlFor="admin">Admin</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="staff" id="staff" />
+                              <Label htmlFor="staff">Staff</Label>
+                            </div>
+                          </RadioGroup>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  {watchRole === 'staff' && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="department"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Department</FormLabel>
+                            <FormControl>
+                              <select 
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                {...field}
+                              >
+                                <option value="">Select department</option>
+                                {departments.map((dept) => (
+                                  <option key={dept} value={dept}>
+                                    {dept}
+                                  </option>
+                                ))}
+                              </select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="position"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Position</FormLabel>
+                            <FormControl>
+                              <select 
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                {...field}
+                              >
+                                <option value="">Select position</option>
+                                {positions.map((pos) => (
+                                  <option key={pos} value={pos}>
+                                    {pos}
+                                  </option>
+                                ))}
+                              </select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  )}
+                  
+                  <FormField
+                    control={form.control}
+                    name="gender"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Department</FormLabel>
+                        <FormLabel>Gender</FormLabel>
                         <FormControl>
                           <select 
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             {...field}
                           >
-                            <option value="">Select department</option>
-                            {departments.map((dept) => (
-                              <option key={dept} value={dept}>
-                                {dept}
-                              </option>
-                            ))}
+                            <option value="">Select gender</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                            <option value="prefer-not-to-say">Prefer not to say</option>
                           </select>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="position"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Position</FormLabel>
-                        <FormControl>
-                          <select 
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            {...field}
-                          >
-                            <option value="">Select position</option>
-                            {positions.map((pos) => (
-                              <option key={pos} value={pos}>
-                                {pos}
-                              </option>
-                            ))}
-                          </select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  
                   <FormField
                     control={form.control}
                     name="dob"
@@ -288,6 +363,7 @@ const LoginForm = ({ onLogin, onSignup }: LoginFormProps) => {
                       </FormItem>
                     )}
                   />
+                  
                   <DialogFooter className="mt-6">
                     <Button type="button" variant="outline" onClick={() => setIsSignupOpen(false)}>
                       Cancel
