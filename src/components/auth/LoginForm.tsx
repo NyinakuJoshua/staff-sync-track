@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { EyeIcon, EyeOffIcon, LockIcon, LogInIcon, MailIcon, UserIcon, UserPlusIcon, IdCardIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon, LockIcon, LogInIcon, MailIcon, UserIcon, UserPlusIcon, IdCardIcon, PhoneIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -15,7 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface LoginFormProps {
   onLogin: (staffId: string, email: string, password: string) => void;
-  onSignup: (name: string, email: string, password: string, role: 'admin' | 'staff', department: string, position: string, dob: string, gender: string) => void;
+  onSignup: (name: string, email: string, password: string, role: 'admin' | 'staff', department: string, position: string, dob: string, gender: string, phoneNumber: string) => void;
 }
 
 const signupSchema = z.object({
@@ -27,6 +27,7 @@ const signupSchema = z.object({
   position: z.string().optional(),
   dob: z.string().min(1, "Please enter your date of birth"),
   gender: z.string().min(1, "Please select your gender"),
+  phoneNumber: z.string().min(1, "Please enter your phone number"),
 });
 
 const LoginForm = ({ onLogin, onSignup }: LoginFormProps) => {
@@ -48,6 +49,7 @@ const LoginForm = ({ onLogin, onSignup }: LoginFormProps) => {
       position: "",
       dob: "",
       gender: "",
+      phoneNumber: "",
     },
   });
 
@@ -80,7 +82,8 @@ const LoginForm = ({ onLogin, onSignup }: LoginFormProps) => {
         values.department || "", 
         values.position || "", 
         values.dob,
-        values.gender
+        values.gender,
+        values.phoneNumber
       );
       setIsSignupOpen(false);
       form.reset();
@@ -357,6 +360,28 @@ const LoginForm = ({ onLogin, onSignup }: LoginFormProps) => {
                           <FormLabel>Date of Birth</FormLabel>
                           <FormControl>
                             <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="phoneNumber"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <PhoneIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input 
+                                type="tel" 
+                                placeholder="+1 (555) 123-4567" 
+                                {...field} 
+                                className="pl-10"
+                              />
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
