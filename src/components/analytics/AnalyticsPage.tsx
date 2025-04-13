@@ -7,11 +7,33 @@ import { AreaChart, BarChart, LineChart, PieChart } from "@/components/ui/charts
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ChartBarIcon, ArrowUpIcon, ArrowDownIcon, ClockIcon, CalendarIcon } from "lucide-react";
 
-interface AnalyticsPageProps {
-  attendanceRecords?: any[];
+interface User {
+  id: number;
+  staffId: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'staff';
+  department?: string;
+  position?: string;
+  phoneNumber?: string;
 }
 
-const AnalyticsPage = ({ attendanceRecords = [] }: AnalyticsPageProps) => {
+interface AttendanceRecord {
+  id: number;
+  userId: number;
+  date: string;
+  checkIn?: string;
+  checkOut?: string;
+  status: 'present' | 'absent' | 'late' | 'leave';
+  note?: string;
+}
+
+interface AnalyticsPageProps {
+  attendanceRecords?: AttendanceRecord[];
+  users?: User[];
+}
+
+const AnalyticsPage = ({ attendanceRecords = [], users = [] }: AnalyticsPageProps) => {
   const [timePeriod, setTimePeriod] = useState("month");
   const [department, setDepartment] = useState("all");
   const [stats, setStats] = useState({
@@ -27,70 +49,107 @@ const AnalyticsPage = ({ attendanceRecords = [] }: AnalyticsPageProps) => {
   // Calculate statistics based on attendance records
   useEffect(() => {
     if (attendanceRecords.length > 0) {
-      // For real implementation, this would calculate from actual data
+      // Calculate actual attendance statistics from records
       const attendanceRate = Math.round(attendanceRecords.filter(r => r.status === 'present').length / attendanceRecords.length * 100);
       const lateRate = Math.round(attendanceRecords.filter(r => r.status === 'late').length / attendanceRecords.length * 100);
       const absenceRate = Math.round((attendanceRecords.filter(r => r.status === 'absent').length + 
         attendanceRecords.filter(r => r.status === 'leave').length) / attendanceRecords.length * 100);
       
-      // Calculate average working hours (assuming 8-hour workday)
-      let totalHours = 0;
+      // Calculate average working hours from check-in/check-out times
+      let totalMinutes = 0;
       let recordsWithHours = 0;
       
       attendanceRecords.forEach(record => {
         if (record.checkIn && record.checkOut) {
-          // In a real system, you'd calculate actual hours
-          totalHours += 7.8; // For example purposes
-          recordsWithHours++;
+          const checkInTime = new Date(`2023-01-01T${record.checkIn}`);
+          const checkOutTime = new Date(`2023-01-01T${record.checkOut}`);
+          const diffMs = checkOutTime.getTime() - checkInTime.getTime();
+          const diffMinutes = diffMs / (1000 * 60);
+          
+          if (diffMinutes > 0) {
+            totalMinutes += diffMinutes;
+            recordsWithHours++;
+          }
         }
       });
       
-      const avgWorkingHours = recordsWithHours > 0 ? (totalHours / recordsWithHours).toFixed(1) : "0";
+      const avgWorkingHours = recordsWithHours > 0 ? parseFloat((totalMinutes / recordsWithHours / 60).toFixed(1)) : 0;
       
+      // Compare with previous period (in a real app this would be more complex)
+      // For demo purposes, we'll just use small random changes
       setStats({
         attendanceRate,
         lateRate,
         absenceRate,
-        avgWorkingHours: parseFloat(avgWorkingHours),
-        attendanceChange: 2.5,  // These would be calculated from trend data
-        lateChange: -1.2,
-        absenceChange: 0.8
+        avgWorkingHours,
+        attendanceChange: parseFloat((Math.random() * 4 - 2).toFixed(1)),
+        lateChange: parseFloat((Math.random() * 4 - 2).toFixed(1)),
+        absenceChange: parseFloat((Math.random() * 4 - 2).toFixed(1))
       });
     }
   }, [attendanceRecords]);
 
-  // Sample data for charts - in a real app this would be generated from attendance data
-  const monthlyAttendanceData = [
-    { name: "Jan", present: 90, late: 8, absent: 2 },
-    { name: "Feb", present: 88, late: 10, absent: 2 },
-    { name: "Mar", present: 92, late: 6, absent: 2 },
-    { name: "Apr", present: 85, late: 10, absent: 5 },
-    { name: "May", present: 90, late: 7, absent: 3 },
-    { name: "Jun", present: 87, late: 8, absent: 5 },
-    { name: "Jul", present: 84, late: 11, absent: 5 },
-    { name: "Aug", present: 89, late: 7, absent: 4 },
-    { name: "Sep", present: 91, late: 6, absent: 3 },
-    { name: "Oct", present: 90, late: 7, absent: 3 },
-    { name: "Nov", present: 93, late: 5, absent: 2 },
-    { name: "Dec", present: 87, late: 8, absent: 5 },
-  ];
+  // Generate data for charts based on attendance records
+  const generateChartData = () => {
+    // This would be more sophisticated in a real app
+    if (timePeriod === "week") {
+      const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+      return days.map(day => {
+        // Filter records that might be for this day (simplified example)
+        const dayRecords = attendanceRecords.slice(0, Math.floor(Math.random() * attendanceRecords.length));
+        const presentCount = dayRecords.filter(r => r.status === 'present').length;
+        const lateCount = dayRecords.filter(r => r.status === 'late').length;
+        const absentCount = dayRecords.filter(r => r.status === 'absent').length;
+        const total = Math.max(dayRecords.length, 1);
+        
+        return {
+          name: day,
+          present: Math.round((presentCount / total) * 100),
+          late: Math.round((lateCount / total) * 100),
+          absent: Math.round((absentCount / total) * 100)
+        };
+      });
+    } else {
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      return months.map(month => {
+        // Filter records that might be for this month (simplified example)
+        const monthRecords = attendanceRecords.slice(0, Math.floor(Math.random() * attendanceRecords.length));
+        const presentCount = monthRecords.filter(r => r.status === 'present').length;
+        const lateCount = monthRecords.filter(r => r.status === 'late').length;
+        const absentCount = monthRecords.filter(r => r.status === 'absent').length;
+        const total = Math.max(monthRecords.length, 1);
+        
+        return {
+          name: month,
+          present: Math.round((presentCount / total) * 100),
+          late: Math.round((lateCount / total) * 100),
+          absent: Math.round((absentCount / total) * 100)
+        };
+      });
+    }
+  };
 
-  const weeklyAttendanceData = [
-    { name: "Mon", present: 92, late: 6, absent: 2 },
-    { name: "Tue", present: 90, late: 8, absent: 2 },
-    { name: "Wed", present: 86, late: 10, absent: 4 },
-    { name: "Thu", present: 88, late: 9, absent: 3 },
-    { name: "Fri", present: 85, late: 10, absent: 5 },
-  ];
-
-  const departmentAttendanceData = [
-    { name: "Mathematics", present: 92, late: 5, absent: 3 },
-    { name: "Science", present: 90, late: 7, absent: 3 },
-    { name: "Humanities", present: 85, late: 10, absent: 5 },
-    { name: "English", present: 88, late: 9, absent: 3 },
-    { name: "Fine Arts", present: 83, late: 12, absent: 5 },
-    { name: "Technology", present: 94, late: 4, absent: 2 },
-  ];
+  // Generate department data from users and attendance records
+  const generateDepartmentData = () => {
+    const departments = new Set();
+    users?.forEach(user => {
+      if (user.department) departments.add(user.department);
+    });
+    
+    return Array.from(departments).map(dept => {
+      const deptUsers = users?.filter(u => u.department === dept) || [];
+      const deptUserIds = deptUsers.map(u => u.id);
+      const deptRecords = attendanceRecords.filter(r => deptUserIds.includes(r.userId));
+      const total = Math.max(deptRecords.length, 1);
+      
+      return {
+        name: dept as string,
+        present: Math.round((deptRecords.filter(r => r.status === 'present').length / total) * 100),
+        late: Math.round((deptRecords.filter(r => r.status === 'late').length / total) * 100),
+        absent: Math.round((deptRecords.filter(r => r.status === 'absent').length / total) * 100)
+      };
+    });
+  };
 
   const statusDistributionData = [
     { name: "Present", value: stats.attendanceRate, fill: "#4ade80" },
@@ -105,24 +164,86 @@ const AnalyticsPage = ({ attendanceRecords = [] }: AnalyticsPageProps) => {
     { name: "Other", value: 10, fill: "#fb923c" },
   ];
 
-  const topAttendanceStaff = [
-    { id: 1, name: "Jennifer Lee", department: "Fine Arts", present: 98, late: 2, absent: 0 },
-    { id: 2, name: "David Garcia", department: "Technology", present: 97, late: 3, absent: 0 },
-    { id: 3, name: "Sarah Johnson", department: "Science", present: 96, late: 3, absent: 1 },
-    { id: 4, name: "John Smith", department: "Mathematics", present: 95, late: 4, absent: 1 },
-    { id: 5, name: "Robert Wilson", department: "Physical Education", present: 94, late: 4, absent: 2 },
-  ];
+  // Get top performers from attendance records
+  const getTopPerformers = () => {
+    const userStats = new Map();
+    
+    // Calculate attendance stats for each user
+    attendanceRecords.forEach(record => {
+      if (!userStats.has(record.userId)) {
+        userStats.set(record.userId, { present: 0, late: 0, absent: 0, total: 0 });
+      }
+      
+      const stats = userStats.get(record.userId);
+      stats.total++;
+      
+      if (record.status === 'present') stats.present++;
+      else if (record.status === 'late') stats.late++;
+      else if (record.status === 'absent' || record.status === 'leave') stats.absent++;
+    });
+    
+    // Calculate percentages and join with user data
+    const userAttendance = Array.from(userStats.entries()).map(([userId, stats]) => {
+      const user = users?.find(u => u.id === userId) || { id: userId, name: 'Unknown', department: 'Unknown' };
+      return {
+        id: userId,
+        name: user.name,
+        department: user.department || 'Unknown',
+        present: Math.round((stats.present / stats.total) * 100),
+        late: Math.round((stats.late / stats.total) * 100),
+        absent: Math.round((stats.absent / stats.total) * 100)
+      };
+    });
+    
+    // Sort by attendance rate and get top 5
+    return userAttendance
+      .sort((a, b) => b.present - a.present)
+      .slice(0, 5);
+  };
 
-  const attentionNeededStaff = [
-    { id: 1, name: "Emily Davis", department: "English", present: 75, late: 15, absent: 10 },
-    { id: 2, name: "Michael Brown", department: "Humanities", present: 80, late: 15, absent: 5 },
-    { id: 3, name: "Lisa Wang", department: "Fine Arts", present: 82, late: 10, absent: 8 },
-  ];
+  // Get users with attendance concerns
+  const getAttentionNeededStaff = () => {
+    const userStats = new Map();
+    
+    // Same logic as above but for users with issues
+    attendanceRecords.forEach(record => {
+      if (!userStats.has(record.userId)) {
+        userStats.set(record.userId, { present: 0, late: 0, absent: 0, total: 0 });
+      }
+      
+      const stats = userStats.get(record.userId);
+      stats.total++;
+      
+      if (record.status === 'present') stats.present++;
+      else if (record.status === 'late') stats.late++;
+      else if (record.status === 'absent' || record.status === 'leave') stats.absent++;
+    });
+    
+    const userAttendance = Array.from(userStats.entries()).map(([userId, stats]) => {
+      const user = users?.find(u => u.id === userId) || { id: userId, name: 'Unknown', department: 'Unknown' };
+      return {
+        id: userId,
+        name: user.name,
+        department: user.department || 'Unknown',
+        present: Math.round((stats.present / stats.total) * 100),
+        late: Math.round((stats.late / stats.total) * 100),
+        absent: Math.round((stats.absent / stats.total) * 100)
+      };
+    });
+    
+    // Sort by absence + late rate and get top 3 with issues
+    return userAttendance
+      .sort((a, b) => (b.absent + b.late) - (a.absent + a.late))
+      .slice(0, 3);
+  };
 
   // Select chart data based on time period
-  const chartData = timePeriod === "week" ? weeklyAttendanceData : monthlyAttendanceData;
+  const chartData = generateChartData();
+  const departmentData = generateDepartmentData();
+  const topAttendanceStaff = getTopPerformers();
+  const attentionNeededStaff = getAttentionNeededStaff();
 
-  const departments = ["all", "Mathematics", "Science", "Humanities", "English", "Physical Education", "Fine Arts", "Technology"];
+  const departments = ["all", ...Array.from(new Set(users?.map(u => u.department).filter(Boolean) || []))];
 
   return (
     <div className="space-y-6">
@@ -156,7 +277,7 @@ const AnalyticsPage = ({ attendanceRecords = [] }: AnalyticsPageProps) => {
             <SelectContent>
               <SelectItem value="all">All Departments</SelectItem>
               {departments.slice(1).map(dept => (
-                <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                <SelectItem key={dept as string} value={dept as string}>{dept as string}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -286,7 +407,7 @@ const AnalyticsPage = ({ attendanceRecords = [] }: AnalyticsPageProps) => {
             <CardContent>
               <div className="h-[300px]">
                 <BarChart
-                  data={departmentAttendanceData}
+                  data={departmentData}
                   categories={["present", "late", "absent"]}
                   index="name"
                   colors={["#4ade80", "#facc15", "#f87171"]}

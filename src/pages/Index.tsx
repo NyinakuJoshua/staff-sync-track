@@ -41,9 +41,7 @@ const Index = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
 
-  // Initialize attendance records with sample data
   useEffect(() => {
-    // This would normally come from an API or database
     const sampleAttendanceRecords = [
       {
         id: 1,
@@ -71,21 +69,18 @@ const Index = () => {
     
     setAttendanceRecords(sampleAttendanceRecords);
     
-    // Try to restore saved users from localStorage
     const savedUsers = localStorage.getItem('staffSyncUsers');
     if (savedUsers) {
       setUsers(JSON.parse(savedUsers));
     }
   }, []);
 
-  // Save users to localStorage whenever they change
   useEffect(() => {
     if (users.length > 0) {
       localStorage.setItem('staffSyncUsers', JSON.stringify(users));
     }
   }, [users]);
 
-  // Check if currentUser has access to a page
   const hasAccess = (page: string) => {
     if (!currentUser) return false;
     
@@ -93,7 +88,6 @@ const Index = () => {
       return true;
     }
     
-    // Staff access limitations
     if (['staff', 'analytics', 'reports', 'dashboard'].includes(page)) {
       return false;
     }
@@ -102,7 +96,6 @@ const Index = () => {
   };
 
   useEffect(() => {
-    // If user doesn't have access to current page, redirect to attendance
     if (isAuthenticated && !hasAccess(currentPage)) {
       setCurrentPage('attendance');
       toast.error("You don't have access to that page");
@@ -123,22 +116,18 @@ const Index = () => {
   };
 
   const handleSignup = (name: string, email: string, password: string, role: 'admin' | 'staff', department: string, position: string, dob: string, gender: string, phoneNumber: string) => {
-    // Check if email already exists
     if (users.some(user => user.email === email)) {
       toast.error("Email already exists");
       return;
     }
     
-    // Generate staff ID
     let staffId = '';
     
     if (role === 'admin') {
-      // For admin, use ADMIN prefix
       const existingAdmins = users.filter(user => user.role === 'admin');
       const newAdminNumber = (existingAdmins.length + 1).toString().padStart(3, '0');
       staffId = `ADMIN${newAdminNumber}`;
     } else {
-      // For staff, use department prefix
       const deptPrefix = department.substring(0, 3).toUpperCase();
       const existingDeptUsers = users.filter(user => 
         user.department === department || 
@@ -148,7 +137,6 @@ const Index = () => {
       staffId = `${deptPrefix}${newStaffNumber}`;
     }
     
-    // Create new user
     const newUser: User = {
       id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
       staffId,
@@ -177,13 +165,11 @@ const Index = () => {
   const handleUpdateCredentials = (currentPassword: string, newPassword: string, newEmail: string, newName: string) => {
     if (!currentUser) return false;
     
-    // Verify current password
     if (currentPassword !== currentUser.password) {
       toast.error("Current password is incorrect");
       return false;
     }
     
-    // Update user in the users array
     const updatedUsers = users.map(user => {
       if (user.id === currentUser.id) {
         return {
@@ -198,7 +184,6 @@ const Index = () => {
     
     setUsers(updatedUsers);
     
-    // Update current user
     setCurrentUser({
       ...currentUser,
       password: newPassword || currentUser.password,
@@ -209,11 +194,10 @@ const Index = () => {
     toast.success("Credentials updated successfully");
     return true;
   };
-  
+
   const handleUpdateProfile = (department?: string, position?: string, gender?: string, phoneNumber?: string) => {
     if (!currentUser) return false;
     
-    // Update user in the users array
     const updatedUsers = users.map(user => {
       if (user.id === currentUser.id) {
         return {
@@ -229,7 +213,6 @@ const Index = () => {
     
     setUsers(updatedUsers);
     
-    // Update current user
     setCurrentUser({
       ...currentUser,
       department: department || currentUser.department,
@@ -242,7 +225,6 @@ const Index = () => {
   };
 
   const renderPage = () => {
-    // If user has no access, show unauthorized message
     if (!hasAccess(currentPage)) {
       return (
         <div className="flex items-center justify-center h-[70vh] flex-col gap-4">

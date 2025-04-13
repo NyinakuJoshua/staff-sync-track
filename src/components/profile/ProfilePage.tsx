@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CheckIcon, EyeIcon, EyeOffIcon, Loader2Icon, ShieldIcon, PencilIcon } from "lucide-react";
+import { CheckIcon, EyeIcon, EyeOffIcon, Loader2Icon, ShieldIcon, PencilIcon, PhoneIcon } from "lucide-react";
 import { toast } from "sonner";
 
 interface ProfilePageProps {
@@ -19,9 +19,10 @@ interface ProfilePageProps {
     position?: string;
     dob?: string;
     gender?: string;
+    phoneNumber?: string;
   };
   onUpdateCredentials: (currentPassword: string, newPassword: string, newEmail: string, newName: string) => boolean;
-  onUpdateProfile?: (department?: string, position?: string, gender?: string) => boolean;
+  onUpdateProfile?: (department?: string, position?: string, gender?: string, phoneNumber?: string) => boolean;
 }
 
 const ProfilePage = ({ user, onUpdateCredentials, onUpdateProfile }: ProfilePageProps) => {
@@ -38,6 +39,7 @@ const ProfilePage = ({ user, onUpdateCredentials, onUpdateProfile }: ProfilePage
   const [department, setDepartment] = useState(user.department || "");
   const [position, setPosition] = useState(user.position || "");
   const [gender, setGender] = useState(user.gender || "");
+  const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber || "");
 
   const handleCredentialsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +62,7 @@ const ProfilePage = ({ user, onUpdateCredentials, onUpdateProfile }: ProfilePage
     
     setIsUpdating(true);
     
-    const success = onUpdateProfile?.(department, position, gender);
+    const success = onUpdateProfile?.(department, position, gender, phoneNumber);
     
     setIsUpdating(false);
     
@@ -162,6 +164,21 @@ const ProfilePage = ({ user, onUpdateCredentials, onUpdateProfile }: ProfilePage
                 </div>
                 
                 <div className="space-y-2">
+                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <div className="relative">
+                    <PhoneIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="phoneNumber"
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      className="pl-10"
+                      placeholder="+1 (555) 123-4567"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
                   <Label htmlFor="dob">Date of Birth</Label>
                   <Input
                     id="dob"
@@ -214,6 +231,13 @@ const ProfilePage = ({ user, onUpdateCredentials, onUpdateProfile }: ProfilePage
                 <h3 className="text-sm font-medium text-muted-foreground">Role</h3>
                 <p className="mt-1">{user.role.charAt(0).toUpperCase() + user.role.slice(1)}</p>
               </div>
+              
+              {user.phoneNumber && (
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground">Phone Number</h3>
+                  <p className="mt-1">{user.phoneNumber}</p>
+                </div>
+              )}
               
               {user.department && (
                 <div>

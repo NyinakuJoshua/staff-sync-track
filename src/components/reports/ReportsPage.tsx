@@ -167,6 +167,7 @@ const ReportsPage = ({ attendanceRecords = [], users = [] }: ReportsPageProps) =
                   <TableHead>Check In</TableHead>
                   <TableHead>Check Out</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Notes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -197,11 +198,14 @@ const ReportsPage = ({ attendanceRecords = [], users = [] }: ReportsPageProps) =
                           record.status === 'absent' ? 'Absent' : 'Leave'}
                         </span>
                       </TableCell>
+                      <TableCell className="max-w-[200px] truncate">
+                        {record.note || "—"}
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-4 text-muted-foreground">
+                    <TableCell colSpan={10} className="text-center py-4 text-muted-foreground">
                       No attendance records found for this period.
                     </TableCell>
                   </TableRow>

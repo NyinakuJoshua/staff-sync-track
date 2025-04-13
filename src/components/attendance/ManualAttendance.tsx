@@ -8,58 +8,53 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarIcon, ClockIcon, UsersIcon } from "lucide-react";
+import { CalendarIcon, MessageSquareIcon } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const ManualAttendance = () => {
   const [date, setDate] = useState<Date>();
-  const [staffMember, setStaffMember] = useState("");
   const [status, setStatus] = useState("");
-  const [checkInTime, setCheckInTime] = useState("");
-  const [checkOutTime, setCheckOutTime] = useState("");
   const [reason, setReason] = useState("");
+  const [isCommentOpen, setIsCommentOpen] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!date || !staffMember || !status) {
+    if (!date || !status) {
       toast.error("Please fill in all required fields!");
       return;
     }
     
-    toast.success("Attendance record has been saved successfully!");
+    toast.success("Attendance comment has been submitted successfully!");
     
     // Reset form after submission
     setDate(undefined);
-    setStaffMember("");
     setStatus("");
-    setCheckInTime("");
-    setCheckOutTime("");
     setReason("");
   };
 
-  const staffMembers = [
-    { id: "js1", name: "John Smith" },
-    { id: "sj2", name: "Sarah Johnson" },
-    { id: "mb3", name: "Michael Brown" },
-    { id: "ed4", name: "Emily Davis" },
-    { id: "rw5", name: "Robert Wilson" },
-    { id: "jl6", name: "Jennifer Lee" },
-    { id: "dg7", name: "David Garcia" },
-    { id: "lw8", name: "Lisa Wang" },
-  ];
+  const handleCommentSubmit = () => {
+    if (!reason.trim()) {
+      toast.error("Please provide a reason");
+      return;
+    }
+    
+    toast.success("Your comment has been submitted to admin");
+    setIsCommentOpen(false);
+  };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Manual Attendance Entry</CardTitle>
+        <CardTitle>Submit Attendance Comment</CardTitle>
         <CardDescription>
-          Record or edit attendance information
+          Provide a reason for your absence, lateness, or early departure
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="date">Date <span className="text-red-500">*</span></Label>
@@ -86,95 +81,58 @@ const ManualAttendance = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="staff">Staff Member <span className="text-red-500">*</span></Label>
-              <Select value={staffMember} onValueChange={setStaffMember}>
-                <SelectTrigger id="staff" className="w-full">
-                  <SelectValue placeholder="Select staff member" />
-                </SelectTrigger>
-                <SelectContent>
-                  {staffMembers.map((staff) => (
-                    <SelectItem key={staff.id} value={staff.id}>
-                      {staff.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
               <Label htmlFor="status">Attendance Status <span className="text-red-500">*</span></Label>
               <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger id="status" className="w-full">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="present">Present</SelectItem>
-                  <SelectItem value="absent">Absent</SelectItem>
                   <SelectItem value="late">Late</SelectItem>
-                  <SelectItem value="leave">On Leave</SelectItem>
+                  <SelectItem value="absent">Absent</SelectItem>
+                  <SelectItem value="leave">Requesting Leave</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="checkin">Check-in Time</Label>
-              <div className="relative">
-                <ClockIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="checkin"
-                  type="time"
-                  value={checkInTime}
-                  onChange={(e) => setCheckInTime(e.target.value)}
-                  className="pl-10"
-                  disabled={status === "absent" || status === "leave"}
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="checkout">Check-out Time</Label>
-              <div className="relative">
-                <ClockIcon className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="checkout"
-                  type="time"
-                  value={checkOutTime}
-                  onChange={(e) => setCheckOutTime(e.target.value)}
-                  className="pl-10"
-                  disabled={status === "absent" || status === "leave"}
-                />
-              </div>
-            </div>
-            
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="reason">Reason / Notes</Label>
-              <Textarea
-                id="reason"
-                placeholder="Enter additional details here..."
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                rows={3}
-              />
-            </div>
           </div>
           
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" type="button" onClick={() => {
-              setDate(undefined);
-              setStaffMember("");
-              setStatus("");
-              setCheckInTime("");
-              setCheckOutTime("");
-              setReason("");
-            }}>
-              Reset
-            </Button>
-            <Button type="submit">Save Record</Button>
-          </div>
-        </form>
+          <Dialog open={isCommentOpen} onOpenChange={setIsCommentOpen}>
+            <DialogTrigger asChild>
+              <Button className="w-full" variant="outline">
+                <MessageSquareIcon className="h-4 w-4 mr-2" />
+                Add Comment or Reason
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Comment</DialogTitle>
+                <DialogDescription>
+                  Provide details about your attendance status.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="comment-reason">Reason / Comment</Label>
+                  <Textarea
+                    id="comment-reason"
+                    placeholder="Please explain why you were late, absent, or need leave..."
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    rows={5}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsCommentOpen(false)}>Cancel</Button>
+                <Button onClick={handleCommentSubmit}>Submit Comment</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          
+          <Button type="button" onClick={handleSubmit} className="w-full">Submit</Button>
+        </div>
       </CardContent>
       <CardFooter className="text-xs text-muted-foreground">
-        <p>Fields marked with <span className="text-red-500">*</span> are required. Manual entries are logged and require admin approval.</p>
+        <p>Fields marked with <span className="text-red-500">*</span> are required. Comments are logged and require admin approval.</p>
       </CardFooter>
     </Card>
   );
