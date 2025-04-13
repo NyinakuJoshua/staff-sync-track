@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
@@ -32,7 +31,11 @@ interface Event {
   description?: string;
 }
 
-const CalendarPage = () => {
+interface CalendarPageProps {
+  currentUser?: { role: 'admin' | 'staff' } | null;
+}
+
+const CalendarPage = ({ currentUser }: CalendarPageProps) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [selectedView, setSelectedView] = useState("month");
   const [events, setEvents] = useState<Event[]>([
@@ -90,7 +93,6 @@ const CalendarPage = () => {
     },
   });
 
-  // Function to check if a date has events
   const hasEvent = (day: Date) => {
     return events.some(event => 
       event.date.getDate() === day.getDate() && 
@@ -99,7 +101,6 @@ const CalendarPage = () => {
     );
   };
 
-  // Get events for the selected date
   const selectedDateEvents = date 
     ? events.filter(event => 
         event.date.getDate() === date.getDate() && 
@@ -108,7 +109,6 @@ const CalendarPage = () => {
       ) 
     : [];
 
-  // Function to get event type color
   const getEventTypeColor = (type: string) => {
     switch(type) {
       case "meeting": return "bg-blue-500";
@@ -161,45 +161,85 @@ const CalendarPage = () => {
             </SelectContent>
           </Select>
           
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <PlusIcon className="h-4 w-4" />
-                Schedule Meeting
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Schedule New Meeting</DialogTitle>
-                <DialogDescription>
-                  Create a new meeting or event for the staff calendar.
-                </DialogDescription>
-              </DialogHeader>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleAddMeeting)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Meeting Title</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Staff Meeting" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="grid grid-cols-2 gap-4">
+          {currentUser?.role === 'admin' && (
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="flex items-center gap-2">
+                  <PlusIcon className="h-4 w-4" />
+                  Schedule Meeting
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>Schedule New Meeting</DialogTitle>
+                  <DialogDescription>
+                    Create a new meeting or event for the staff calendar.
+                  </DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(handleAddMeeting)} className="space-y-4">
                     <FormField
                       control={form.control}
-                      name="date"
+                      name="title"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Date</FormLabel>
+                          <FormLabel>Meeting Title</FormLabel>
                           <FormControl>
-                            <Input type="date" {...field} />
+                            <Input placeholder="Staff Meeting" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="date"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Date</FormLabel>
+                            <FormControl>
+                              <Input type="date" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="time"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Time</FormLabel>
+                            <FormControl>
+                              <Input type="time" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Meeting Type</FormLabel>
+                          <FormControl>
+                            <select 
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              {...field}
+                            >
+                              <option value="">Select meeting type</option>
+                              <option value="meeting">Meeting</option>
+                              <option value="training">Training</option>
+                              <option value="conference">Conference</option>
+                              <option value="holiday">Holiday</option>
+                              <option value="other">Other</option>
+                            </select>
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -208,71 +248,33 @@ const CalendarPage = () => {
                     
                     <FormField
                       control={form.control}
-                      name="time"
+                      name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Time</FormLabel>
+                          <FormLabel>Description</FormLabel>
                           <FormControl>
-                            <Input type="time" {...field} />
+                            <Textarea 
+                              placeholder="Provide details about the meeting" 
+                              className="resize-none" 
+                              {...field} 
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Meeting Type</FormLabel>
-                        <FormControl>
-                          <select 
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                            {...field}
-                          >
-                            <option value="">Select meeting type</option>
-                            <option value="meeting">Meeting</option>
-                            <option value="training">Training</option>
-                            <option value="conference">Conference</option>
-                            <option value="holiday">Holiday</option>
-                            <option value="other">Other</option>
-                          </select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Description</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Provide details about the meeting" 
-                            className="resize-none" 
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <DialogFooter className="mt-6">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button type="submit">Schedule Meeting</Button>
-                  </DialogFooter>
-                </form>
-              </Form>
-            </DialogContent>
-          </Dialog>
+                    
+                    <DialogFooter className="mt-6">
+                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                        Cancel
+                      </Button>
+                      <Button type="submit">Schedule Meeting</Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
       </div>
 

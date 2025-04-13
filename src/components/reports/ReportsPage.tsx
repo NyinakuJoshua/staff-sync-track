@@ -7,7 +7,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DownloadIcon, PrinterIcon } from "lucide-react";
 import { toast } from "sonner";
 
-const ReportsPage = () => {
+interface AttendanceRecord {
+  id: number;
+  userId: number;
+  date: string;
+  checkIn?: string;
+  checkOut?: string;
+  status: 'present' | 'absent' | 'late' | 'leave';
+  note?: string;
+}
+
+interface User {
+  id: number;
+  staffId: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'staff';
+  department?: string;
+  position?: string;
+  phoneNumber?: string;
+}
+
+interface ReportsPageProps {
+  attendanceRecords: AttendanceRecord[];
+  users: User[];
+}
+
+const ReportsPage = ({ attendanceRecords = [], users = [] }: ReportsPageProps) => {
   const [selectedReport, setSelectedReport] = useState("daily");
   const currentDate = new Date().toLocaleDateString('en-US', { 
     year: 'numeric', 
@@ -15,45 +41,58 @@ const ReportsPage = () => {
     day: 'numeric' 
   });
 
-  // Sample attendance data for the reports
-  const attendanceRecords = [
-    { id: 1, staffId: "ENG001", name: "John Smith", position: "Teacher", department: "English", date: "2025-04-12", checkIn: "08:15 AM", checkOut: "04:30 PM", status: "present" },
-    { id: 2, staffId: "MAT002", name: "Sarah Johnson", position: "Department Head", department: "Mathematics", date: "2025-04-12", checkIn: "07:55 AM", checkOut: "04:45 PM", status: "present" },
-    { id: 3, staffId: "SCI003", name: "Michael Brown", position: "Teacher", department: "Science", date: "2025-04-12", checkIn: "09:10 AM", checkOut: "04:20 PM", status: "late" },
-    { id: 4, staffId: "HUM004", name: "Emily Davis", position: "Teacher", department: "Humanities", date: "2025-04-12", checkIn: null, checkOut: null, status: "absent" },
-    { id: 5, staffId: "PHY005", name: "David Wilson", position: "Teacher", department: "Physical Education", date: "2025-04-12", checkIn: "08:05 AM", checkOut: "04:15 PM", status: "present" },
-    { id: 6, staffId: "TEC006", name: "Jennifer Lee", position: "Administrator", department: "Technology", date: "2025-04-12", checkIn: "07:50 AM", checkOut: "05:00 PM", status: "present" },
-    { id: 7, staffId: "ART007", name: "Robert Martinez", position: "Teacher", department: "Fine Arts", date: "2025-04-12", checkIn: null, checkOut: null, status: "leave" },
-  ];
+  // Helper to get user details by userId
+  const getUserById = (userId: number) => {
+    return users.find(user => user.id === userId) || null;
+  };
 
-  // Weekly data (for the past 7 days)
-  const weeklyAttendanceRecords = [
-    ...attendanceRecords,
-    { id: 8, staffId: "ENG001", name: "John Smith", position: "Teacher", department: "English", date: "2025-04-11", checkIn: "08:05 AM", checkOut: "04:20 PM", status: "present" },
-    { id: 9, staffId: "MAT002", name: "Sarah Johnson", position: "Department Head", department: "Mathematics", date: "2025-04-11", checkIn: "08:00 AM", checkOut: "04:30 PM", status: "present" },
-    { id: 10, staffId: "SCI003", name: "Michael Brown", position: "Teacher", department: "Science", date: "2025-04-11", checkIn: "08:10 AM", checkOut: "04:15 PM", status: "present" },
-    { id: 11, staffId: "HUM004", name: "Emily Davis", position: "Teacher", department: "Humanities", date: "2025-04-11", checkIn: "08:20 AM", checkOut: "04:25 PM", status: "present" },
-    { id: 12, staffId: "PHY005", name: "David Wilson", position: "Teacher", department: "Physical Education", date: "2025-04-11", checkIn: null, checkOut: null, status: "leave" },
-  ];
+  // Process attendance records to include user details
+  const processedRecords = attendanceRecords.map(record => {
+    const user = getUserById(record.userId);
+    return {
+      id: record.id,
+      userId: record.userId,
+      staffId: user?.staffId || "N/A",
+      name: user?.name || "Unknown User",
+      department: user?.department || "N/A",
+      position: user?.position || "N/A",
+      phoneNumber: user?.phoneNumber || "N/A",
+      date: record.date,
+      checkIn: record.checkIn || null,
+      checkOut: record.checkOut || null,
+      status: record.status,
+      note: record.note
+    };
+  });
 
-  // Monthly data
-  const monthlyAttendanceRecords = [
-    ...weeklyAttendanceRecords,
-    { id: 13, staffId: "ENG001", name: "John Smith", position: "Teacher", department: "English", date: "2025-04-05", checkIn: "08:15 AM", checkOut: "04:30 PM", status: "present" },
-    { id: 14, staffId: "MAT002", name: "Sarah Johnson", position: "Department Head", department: "Mathematics", date: "2025-04-05", checkIn: "07:55 AM", checkOut: "04:45 PM", status: "present" },
-    { id: 15, staffId: "SCI003", name: "Michael Brown", position: "Teacher", department: "Science", date: "2025-04-05", checkIn: "09:10 AM", checkOut: "04:20 PM", status: "late" },
-  ];
-
+  // Filter records based on the selected report type
   const getRecordsByReportType = () => {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
     switch(selectedReport) {
       case "daily":
-        return attendanceRecords;
+        // Filter for today's records
+        return processedRecords.filter(record => 
+          record.date === today
+        );
       case "weekly":
-        return weeklyAttendanceRecords;
+        // Filter for records within the past 7 days
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        return processedRecords.filter(record => 
+          new Date(record.date) >= oneWeekAgo
+        );
       case "monthly":
-        return monthlyAttendanceRecords;
+        // Filter for records within the current month
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        return processedRecords.filter(record => {
+          const recordDate = new Date(record.date);
+          return recordDate.getMonth() === currentMonth && 
+                 recordDate.getFullYear() === currentYear;
+        });
       default:
-        return attendanceRecords;
+        return processedRecords;
     }
   };
 
@@ -123,6 +162,7 @@ const ReportsPage = () => {
                   <TableHead>Name</TableHead>
                   <TableHead>Department</TableHead>
                   <TableHead>Position</TableHead>
+                  <TableHead>Phone Number</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Check In</TableHead>
                   <TableHead>Check Out</TableHead>
@@ -130,33 +170,42 @@ const ReportsPage = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {getRecordsByReportType().map((record) => (
-                  <TableRow key={record.id}>
-                    <TableCell className="font-mono">{record.staffId}</TableCell>
-                    <TableCell className="font-medium">{record.name}</TableCell>
-                    <TableCell>{record.department}</TableCell>
-                    <TableCell>{record.position}</TableCell>
-                    <TableCell>
-                      {new Date(record.date).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>{record.checkIn || "—"}</TableCell>
-                    <TableCell>{record.checkOut || "—"}</TableCell>
-                    <TableCell>
-                      <span className={
-                        `px-2 py-1 rounded-full text-xs font-medium ${
-                          record.status === 'present' ? 'bg-green-100 text-green-800' :
-                          record.status === 'late' ? 'bg-yellow-100 text-yellow-800' :
-                          record.status === 'absent' ? 'bg-red-100 text-red-800' :
-                          'bg-blue-100 text-blue-800'
-                        }`
-                      }>
-                        {record.status === 'present' ? 'Present' :
-                         record.status === 'late' ? 'Late' :
-                         record.status === 'absent' ? 'Absent' : 'Leave'}
-                      </span>
+                {getRecordsByReportType().length > 0 ? (
+                  getRecordsByReportType().map((record) => (
+                    <TableRow key={record.id}>
+                      <TableCell className="font-mono">{record.staffId}</TableCell>
+                      <TableCell className="font-medium">{record.name}</TableCell>
+                      <TableCell>{record.department}</TableCell>
+                      <TableCell>{record.position}</TableCell>
+                      <TableCell>{record.phoneNumber}</TableCell>
+                      <TableCell>
+                        {new Date(record.date).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>{record.checkIn || "—"}</TableCell>
+                      <TableCell>{record.checkOut || "—"}</TableCell>
+                      <TableCell>
+                        <span className={
+                          `px-2 py-1 rounded-full text-xs font-medium ${
+                            record.status === 'present' ? 'bg-green-100 text-green-800' :
+                            record.status === 'late' ? 'bg-yellow-100 text-yellow-800' :
+                            record.status === 'absent' ? 'bg-red-100 text-red-800' :
+                            'bg-blue-100 text-blue-800'
+                          }`
+                        }>
+                          {record.status === 'present' ? 'Present' :
+                          record.status === 'late' ? 'Late' :
+                          record.status === 'absent' ? 'Absent' : 'Leave'}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-4 text-muted-foreground">
+                      No attendance records found for this period.
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </div>

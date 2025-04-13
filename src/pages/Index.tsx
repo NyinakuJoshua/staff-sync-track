@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import LoginForm from "@/components/auth/LoginForm";
 import AppLayout from "@/components/layout/AppLayout";
@@ -22,6 +21,7 @@ interface User {
   position?: string;
   dob?: string;
   gender?: string;
+  phoneNumber?: string;
 }
 
 interface AttendanceRecord {
@@ -122,7 +122,7 @@ const Index = () => {
     }
   };
 
-  const handleSignup = (name: string, email: string, password: string, role: 'admin' | 'staff', department: string, position: string, dob: string, gender: string) => {
+  const handleSignup = (name: string, email: string, password: string, role: 'admin' | 'staff', department: string, position: string, dob: string, gender: string, phoneNumber: string) => {
     // Check if email already exists
     if (users.some(user => user.email === email)) {
       toast.error("Email already exists");
@@ -159,7 +159,8 @@ const Index = () => {
       department: role === 'staff' ? department : undefined,
       position: role === 'staff' ? position : undefined,
       dob,
-      gender
+      gender,
+      phoneNumber
     };
     
     setUsers([...users, newUser]);
@@ -209,7 +210,7 @@ const Index = () => {
     return true;
   };
   
-  const handleUpdateProfile = (department?: string, position?: string, gender?: string) => {
+  const handleUpdateProfile = (department?: string, position?: string, gender?: string, phoneNumber?: string) => {
     if (!currentUser) return false;
     
     // Update user in the users array
@@ -219,7 +220,8 @@ const Index = () => {
           ...user,
           department: department || user.department,
           position: position || user.position,
-          gender: gender || user.gender
+          gender: gender || user.gender,
+          phoneNumber: phoneNumber || user.phoneNumber
         };
       }
       return user;
@@ -232,7 +234,8 @@ const Index = () => {
       ...currentUser,
       department: department || currentUser.department,
       position: position || currentUser.position,
-      gender: gender || currentUser.gender
+      gender: gender || currentUser.gender,
+      phoneNumber: phoneNumber || currentUser.phoneNumber
     });
     
     return true;
@@ -257,9 +260,9 @@ const Index = () => {
       case "staff":
         return <StaffPage />;
       case "calendar":
-        return <CalendarPage />;
+        return <CalendarPage currentUser={currentUser} />;
       case "reports":
-        return <ReportsPage />;
+        return <ReportsPage attendanceRecords={attendanceRecords} users={users} />;
       case "analytics":
         return <AnalyticsPage attendanceRecords={attendanceRecords} />;
       case "profile":

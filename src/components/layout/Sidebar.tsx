@@ -34,8 +34,10 @@ const Sidebar = ({ onPageChange, onLogout, currentPage, userRole }: SidebarProps
       items.push({ id: "dashboard", icon: HomeIcon, label: "Dashboard" });
     }
     
-    // All users can access attendance
-    items.push({ id: "attendance", icon: ClipboardCheckIcon, label: "Attendance" });
+    // Only staff can access attendance check-in/out
+    if (userRole === 'staff') {
+      items.push({ id: "attendance", icon: ClipboardCheckIcon, label: "Attendance" });
+    }
     
     // Only admin can view staff management
     if (userRole === 'admin') {
