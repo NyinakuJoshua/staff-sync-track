@@ -5,20 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Search, UserPlus, Mail, Phone } from "lucide-react";
-
-interface User {
-  id: number;
-  staffId: string;
-  email: string;
-  name: string;
-  role: 'admin' | 'staff';
-  department?: string;
-  position?: string;
-  dob?: string;
-  gender?: string;
-  phoneNumber?: string;
-}
+import { Search, Mail, Phone, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { User } from "@/types";
 
 const StaffPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -41,6 +30,25 @@ const StaffPage = () => {
     (user.position && user.position.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  const handleDeleteStaff = (userId: number) => {
+    // Filter out the user to be deleted
+    const updatedUsers = users.filter(user => user.id !== userId);
+    
+    // Update the state and localStorage
+    setUsers(updatedUsers);
+    localStorage.setItem('staffSyncUsers', JSON.stringify(updatedUsers));
+    
+    // Also remove their attendance records
+    const savedRecords = localStorage.getItem('attendanceRecords');
+    if (savedRecords) {
+      const records = JSON.parse(savedRecords);
+      const updatedRecords = records.filter((record: any) => record.userId !== userId);
+      localStorage.setItem('attendanceRecords', JSON.stringify(updatedRecords));
+    }
+    
+    toast.success("Staff member removed successfully");
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -50,21 +58,15 @@ const StaffPage = () => {
         </p>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search staff..."
-            className="w-[300px] pl-8"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <Button>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add Staff
-        </Button>
+      <div className="relative">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="search"
+          placeholder="Search staff..."
+          className="w-full sm:w-[300px] pl-8"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
       </div>
 
       <Card>
@@ -80,53 +82,68 @@ const StaffPage = () => {
               No staff members found in the system.
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Staff ID</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Position</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-mono">{user.staffId}</TableCell>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>
-                      <Badge variant={user.role === 'admin' ? "default" : "outline"}>
-                        {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{user.department || "—"}</TableCell>
-                    <TableCell>{user.position || "—"}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <a href={`mailto:${user.email}`} className="inline-flex items-center hover:text-primary">
-                          <Mail className="h-4 w-4 mr-1" />
-                          <span className="sr-only">Email</span>
-                        </a>
-                        {user.phoneNumber && (
-                          <a href={`tel:${user.phoneNumber}`} className="inline-flex items-center hover:text-primary">
-                            <Phone className="h-4 w-4 mr-1" />
-                            <span className="sr-only">Phone</span>
-                          </a>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">
-                        Active
-                      </Badge>
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Staff ID</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Department</TableHead>
+                    <TableHead>Position</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Action</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell className="font-mono">{user.staffId}</TableCell>
+                      <TableCell className="font-medium">{user.name}</TableCell>
+                      <TableCell>
+                        <Badge variant={user.role === 'admin' ? "default" : "outline"}>
+                          {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{user.department || "—"}</TableCell>
+                      <TableCell>{user.position || "—"}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <a href={`mailto:${user.email}`} className="inline-flex items-center hover:text-primary">
+                            <Mail className="h-4 w-4 mr-1" />
+                            <span className="sr-only">Email</span>
+                          </a>
+                          {user.phoneNumber && (
+                            <a href={`tel:${user.phoneNumber}`} className="inline-flex items-center hover:text-primary">
+                              <Phone className="h-4 w-4 mr-1" />
+                              <span className="sr-only">Phone</span>
+                            </a>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">
+                          Active
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => handleDeleteStaff(user.id)}
+                          disabled={user.role === 'admin'}
+                          title={user.role === 'admin' ? "Admin accounts cannot be deleted" : "Delete staff member"}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete</span>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

@@ -45,4 +45,5 @@ export interface CalendarEvent {
   description?: string;
   createdBy: number;
   attendees?: number[];
+  isVisible?: boolean; // To control visibility for staff/admin
 }

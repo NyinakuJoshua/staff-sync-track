@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -58,7 +59,7 @@ const AttendanceHistory = () => {
       const searchLower = search.toLowerCase();
       filtered = filtered.filter(record => 
         record.date.toLowerCase().includes(searchLower) ||
-        (record.notes && record.notes.toLowerCase().includes(searchLower)) ||
+        (record.note && record.note.toLowerCase().includes(searchLower)) ||
         (record.status && record.status.toLowerCase().includes(searchLower))
       );
     }
@@ -84,7 +85,7 @@ const AttendanceHistory = () => {
       record.checkOut || "-",
       record.hoursWorked || "-",
       record.status,
-      record.notes || "-"
+      record.note || "-"
     ]);
     
     const csvContent = [headers, ...csvData].map(row => row.join(",")).join("\n");
@@ -221,7 +222,7 @@ const AttendanceHistory = () => {
                     <TableCell>{record.checkOut || "-"}</TableCell>
                     <TableCell>{record.hoursWorked || "-"}</TableCell>
                     <TableCell>{getStatusBadge(record.status)}</TableCell>
-                    <TableCell>{record.notes || "-"}</TableCell>
+                    <TableCell>{record.note || "-"}</TableCell>
                   </TableRow>
                 ))
               ) : (

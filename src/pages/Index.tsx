@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import LoginForm from "@/components/auth/LoginForm";
 import AppLayout from "@/components/layout/AppLayout";
@@ -9,31 +10,7 @@ import ReportsPage from "@/components/reports/ReportsPage";
 import AnalyticsPage from "@/components/analytics/AnalyticsPage";
 import ProfilePage from "@/components/profile/ProfilePage";
 import { toast } from "sonner";
-
-interface User {
-  id: number;
-  staffId: string;
-  email: string;
-  name: string;
-  role: 'admin' | 'staff';
-  password: string;
-  department?: string;
-  position?: string;
-  dob?: string;
-  gender?: string;
-  phoneNumber?: string;
-}
-
-interface AttendanceRecord {
-  id: number;
-  userId: number;
-  date: string;
-  checkIn?: string;
-  checkOut?: string;
-  status: 'present' | 'absent' | 'late' | 'leave' | 'completed';
-  hoursWorked?: string;
-  note?: string;
-}
+import { User, AttendanceRecord, CalendarEvent } from "@/types";
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -41,20 +18,30 @@ const Index = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  
+  // Persist check-in state between page navigation
+  const [checkInStatus, setCheckInStatus] = useState<{
+    isCheckedIn: boolean;
+    checkInTime: string | null;
+  }>({
+    isCheckedIn: false,
+    checkInTime: null
+  });
 
   useEffect(() => {
+    // Load initial user data and attendance records
     const savedRecords = localStorage.getItem('attendanceRecords');
     if (savedRecords) {
       setAttendanceRecords(JSON.parse(savedRecords));
     } else {
-      const sampleAttendanceRecords = [
+      const sampleAttendanceRecords: AttendanceRecord[] = [
         {
           id: 1,
           userId: 1,
           date: "2025-04-12",
           checkIn: "08:15:00",
           checkOut: "16:30:00",
-          status: "present" as const,
+          status: "present",
           hoursWorked: "8.25"
         },
         {
@@ -63,14 +50,14 @@ const Index = () => {
           date: "2025-04-12",
           checkIn: "09:10:00",
           checkOut: "16:20:00",
-          status: "late" as const,
+          status: "late",
           hoursWorked: "7.17"
         },
         {
           id: 3,
           userId: 3,
           date: "2025-04-12",
-          status: "absent" as const,
+          status: "absent",
           hoursWorked: "0"
         },
       ];
@@ -82,6 +69,28 @@ const Index = () => {
     const savedUsers = localStorage.getItem('staffSyncUsers');
     if (savedUsers) {
       setUsers(JSON.parse(savedUsers));
+    }
+    
+    // Load persisted check-in state from localStorage
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      const user = JSON.parse(savedUser);
+      setCurrentUser(user);
+      setIsAuthenticated(true);
+      
+      // Set current page based on user role
+      setCurrentPage(user.role === 'admin' ? 'dashboard' : 'attendance');
+      
+      // Check if user is checked in
+      const checkStatus = localStorage.getItem('staffCheckStatus');
+      const checkInTime = localStorage.getItem('staffCheckInTime');
+      
+      if (checkStatus === 'checkedIn') {
+        setCheckInStatus({
+          isCheckedIn: true,
+          checkInTime: checkInTime
+        });
+      }
     }
   }, []);
 
@@ -128,6 +137,17 @@ const Index = () => {
       
       toast.success(`Welcome back, ${user.name}!`);
       setCurrentPage(user.role === 'admin' ? 'dashboard' : 'attendance');
+      
+      // Check if user already has check-in status
+      const checkStatus = localStorage.getItem('staffCheckStatus');
+      const checkInTime = localStorage.getItem('staffCheckInTime');
+      
+      if (checkStatus === 'checkedIn') {
+        setCheckInStatus({
+          isCheckedIn: true,
+          checkInTime: checkInTime
+        });
+      }
     } else {
       toast.error("Invalid staff ID, email or password");
     }
@@ -177,10 +197,17 @@ const Index = () => {
     setIsAuthenticated(false);
     setCurrentUser(null);
     setCurrentPage("dashboard");
+    
+    // Clear check-in status only if user manually logs out
     localStorage.removeItem('currentUser');
     localStorage.removeItem('staffCheckStatus');
     localStorage.removeItem('staffCheckInTime');
     localStorage.removeItem('staffCheckOutTime');
+    
+    setCheckInStatus({
+      isCheckedIn: false,
+      checkInTime: null
+    });
     
     toast.success("You have been logged out successfully!");
   };
@@ -267,7 +294,7 @@ const Index = () => {
       case "dashboard":
         return <DashboardPage users={users} attendanceRecords={attendanceRecords} />;
       case "attendance":
-        return <AttendancePage />;
+        return <AttendancePage checkInStatus={checkInStatus} setCheckInStatus={setCheckInStatus} />;
       case "staff":
         return <StaffPage />;
       case "calendar":
@@ -297,6 +324,7 @@ const Index = () => {
           onPageChange={setCurrentPage}
           onLogout={handleLogout}
           currentUser={currentUser}
+          checkInStatus={checkInStatus}
         >
           <div className="mb-4 border-b pb-2">
             <div className="text-sm text-muted-foreground">
@@ -304,6 +332,11 @@ const Index = () => {
               {currentUser?.staffId && (
                 <span className="ml-2 font-mono text-xs bg-gray-100 px-2 py-0.5 rounded">
                   ID: {currentUser.staffId}
+                </span>
+              )}
+              {checkInStatus.isCheckedIn && (
+                <span className="ml-2 font-mono text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">
+                  Checked In: {checkInStatus.checkInTime}
                 </span>
               )}
             </div>
