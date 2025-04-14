@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar } from "@/components/ui/calendar";
 import { Badge } from "@/components/ui/badge";
@@ -38,49 +39,80 @@ interface CalendarPageProps {
 const CalendarPage = ({ currentUser }: CalendarPageProps) => {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [selectedView, setSelectedView] = useState("month");
-  const [events, setEvents] = useState<Event[]>([
-    { 
-      id: 1, 
-      title: "Staff Meeting", 
-      date: new Date(2025, 3, 12), 
-      time: "10:00 AM",
-      type: "meeting",
-      description: "General staff updates and announcements"
-    },
-    { 
-      id: 2, 
-      title: "Professional Development Day", 
-      date: new Date(2025, 3, 15), 
-      time: "09:00 AM",
-      type: "training",
-      description: "Full-day workshop on new teaching methodologies"
-    },
-    { 
-      id: 3, 
-      title: "Parent-Teacher Conference", 
-      date: new Date(2025, 3, 18), 
-      time: "04:00 PM",
-      type: "conference",
-      description: "End of term parent meetings"
-    },
-    { 
-      id: 4, 
-      title: "Department Planning", 
-      date: new Date(2025, 3, 20), 
-      time: "11:30 AM",
-      type: "meeting",
-      description: "Curriculum planning for next semester"
-    },
-    { 
-      id: 5, 
-      title: "School Holiday", 
-      date: new Date(2025, 3, 25), 
-      time: "All day",
-      type: "holiday",
-      description: "School closed for spring break"
-    },
-  ]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    // Load events from localStorage
+    const savedEvents = localStorage.getItem('staffSyncEvents');
+    if (savedEvents) {
+      const parsedEvents = JSON.parse(savedEvents);
+      // Convert string dates back to Date objects
+      const eventsWithDates = parsedEvents.map((event: any) => ({
+        ...event,
+        date: new Date(event.date)
+      }));
+      setEvents(eventsWithDates);
+    } else {
+      // Set default events if none exist
+      const defaultEvents = [
+        { 
+          id: 1, 
+          title: "Staff Meeting", 
+          date: new Date(2025, 3, 12), 
+          time: "10:00 AM",
+          type: "meeting",
+          description: "General staff updates and announcements"
+        },
+        { 
+          id: 2, 
+          title: "Professional Development Day", 
+          date: new Date(2025, 3, 15), 
+          time: "09:00 AM",
+          type: "training",
+          description: "Full-day workshop on new teaching methodologies"
+        },
+        { 
+          id: 3, 
+          title: "Parent-Teacher Conference", 
+          date: new Date(2025, 3, 18), 
+          time: "04:00 PM",
+          type: "conference",
+          description: "End of term parent meetings"
+        },
+        { 
+          id: 4, 
+          title: "Department Planning", 
+          date: new Date(2025, 3, 20), 
+          time: "11:30 AM",
+          type: "meeting",
+          description: "Curriculum planning for next semester"
+        },
+        { 
+          id: 5, 
+          title: "School Holiday", 
+          date: new Date(2025, 3, 25), 
+          time: "All day",
+          type: "holiday",
+          description: "School closed for spring break"
+        },
+      ];
+      setEvents(defaultEvents);
+      // Save default events to localStorage
+      saveEventsToLocalStorage(defaultEvents);
+    }
+  }, []);
+
+  // Save events to localStorage whenever they change
+  useEffect(() => {
+    if (events.length > 0) {
+      saveEventsToLocalStorage(events);
+    }
+  }, [events]);
+
+  const saveEventsToLocalStorage = (eventsToSave: Event[]) => {
+    localStorage.setItem('staffSyncEvents', JSON.stringify(eventsToSave));
+  };
 
   const form = useForm<z.infer<typeof meetingSchema>>({
     resolver: zodResolver(meetingSchema),

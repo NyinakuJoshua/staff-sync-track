@@ -30,7 +30,8 @@ interface AttendanceRecord {
   date: string;
   checkIn?: string;
   checkOut?: string;
-  status: 'present' | 'absent' | 'late' | 'leave';
+  status: 'present' | 'absent' | 'late' | 'leave' | 'completed';
+  hoursWorked?: string;
   note?: string;
 }
 
@@ -42,32 +43,41 @@ const Index = () => {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
 
   useEffect(() => {
-    const sampleAttendanceRecords = [
-      {
-        id: 1,
-        userId: 1,
-        date: "2025-04-12",
-        checkIn: "08:15:00",
-        checkOut: "16:30:00",
-        status: "present" as const,
-      },
-      {
-        id: 2,
-        userId: 2,
-        date: "2025-04-12",
-        checkIn: "09:10:00",
-        checkOut: "16:20:00",
-        status: "late" as const,
-      },
-      {
-        id: 3,
-        userId: 3,
-        date: "2025-04-12",
-        status: "absent" as const,
-      },
-    ];
-    
-    setAttendanceRecords(sampleAttendanceRecords);
+    const savedRecords = localStorage.getItem('attendanceRecords');
+    if (savedRecords) {
+      setAttendanceRecords(JSON.parse(savedRecords));
+    } else {
+      const sampleAttendanceRecords = [
+        {
+          id: 1,
+          userId: 1,
+          date: "2025-04-12",
+          checkIn: "08:15:00",
+          checkOut: "16:30:00",
+          status: "present" as const,
+          hoursWorked: "8.25"
+        },
+        {
+          id: 2,
+          userId: 2,
+          date: "2025-04-12",
+          checkIn: "09:10:00",
+          checkOut: "16:20:00",
+          status: "late" as const,
+          hoursWorked: "7.17"
+        },
+        {
+          id: 3,
+          userId: 3,
+          date: "2025-04-12",
+          status: "absent" as const,
+          hoursWorked: "0"
+        },
+      ];
+      
+      setAttendanceRecords(sampleAttendanceRecords);
+      localStorage.setItem('attendanceRecords', JSON.stringify(sampleAttendanceRecords));
+    }
     
     const savedUsers = localStorage.getItem('staffSyncUsers');
     if (savedUsers) {
@@ -81,6 +91,12 @@ const Index = () => {
     }
   }, [users]);
 
+  useEffect(() => {
+    if (attendanceRecords.length > 0) {
+      localStorage.setItem('attendanceRecords', JSON.stringify(attendanceRecords));
+    }
+  }, [attendanceRecords]);
+
   const hasAccess = (page: string) => {
     if (!currentUser) return false;
     
@@ -88,7 +104,7 @@ const Index = () => {
       return true;
     }
     
-    if (['staff', 'analytics', 'reports', 'dashboard'].includes(page)) {
+    if (['staff', 'analytics', 'reports'].includes(page)) {
       return false;
     }
     
@@ -100,7 +116,7 @@ const Index = () => {
       setCurrentPage('attendance');
       toast.error("You don't have access to that page");
     }
-  }, [currentPage, currentUser]);
+  }, [currentPage, currentUser, isAuthenticated]);
 
   const handleLogin = (staffId: string, email: string, password: string) => {
     const user = users.find(u => u.staffId === staffId && u.email === email && u.password === password);
@@ -108,6 +124,8 @@ const Index = () => {
     if (user) {
       setCurrentUser(user);
       setIsAuthenticated(true);
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      
       toast.success(`Welcome back, ${user.name}!`);
       setCurrentPage(user.role === 'admin' ? 'dashboard' : 'attendance');
     } else {
@@ -159,6 +177,11 @@ const Index = () => {
     setIsAuthenticated(false);
     setCurrentUser(null);
     setCurrentPage("dashboard");
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('staffCheckStatus');
+    localStorage.removeItem('staffCheckInTime');
+    localStorage.removeItem('staffCheckOutTime');
+    
     toast.success("You have been logged out successfully!");
   };
 
@@ -184,12 +207,15 @@ const Index = () => {
     
     setUsers(updatedUsers);
     
-    setCurrentUser({
+    const updatedUser = {
       ...currentUser,
       password: newPassword || currentUser.password,
       email: newEmail || currentUser.email,
       name: newName || currentUser.name
-    });
+    };
+    
+    setCurrentUser(updatedUser);
+    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
     
     toast.success("Credentials updated successfully");
     return true;
@@ -213,13 +239,16 @@ const Index = () => {
     
     setUsers(updatedUsers);
     
-    setCurrentUser({
+    const updatedUser = {
       ...currentUser,
       department: department || currentUser.department,
       position: position || currentUser.position,
       gender: gender || currentUser.gender,
       phoneNumber: phoneNumber || currentUser.phoneNumber
-    });
+    };
+    
+    setCurrentUser(updatedUser);
+    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
     
     return true;
   };

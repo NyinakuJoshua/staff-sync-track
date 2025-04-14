@@ -13,6 +13,26 @@ const CheckInOut = () => {
   const [checkOutTime, setCheckOutTime] = useState<Date | null>(null);
   const [elapsedTime, setElapsedTime] = useState<string | null>(null);
 
+  // Load check-in state from localStorage on component mount
+  useEffect(() => {
+    const savedStatus = localStorage.getItem('staffCheckStatus');
+    const savedCheckInTime = localStorage.getItem('staffCheckInTime');
+    const savedCheckOutTime = localStorage.getItem('staffCheckOutTime');
+    
+    if (savedStatus) {
+      setStatus(savedStatus as "in" | "out");
+    }
+    
+    if (savedCheckInTime) {
+      setCheckInTime(new Date(savedCheckInTime));
+    }
+    
+    if (savedCheckOutTime) {
+      setCheckOutTime(new Date(savedCheckOutTime));
+    }
+  }, []);
+
+  // Update current time every second
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -21,6 +41,7 @@ const CheckInOut = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Calculate elapsed time when checked in
   useEffect(() => {
     if (status === "in" && checkInTime) {
       const timer = setInterval(() => {
@@ -45,6 +66,14 @@ const CheckInOut = () => {
     const now = new Date();
     setCheckInTime(now);
     setStatus("in");
+    
+    // Save to localStorage
+    localStorage.setItem('staffCheckStatus', 'in');
+    localStorage.setItem('staffCheckInTime', now.toISOString());
+    
+    // Save to attendance records
+    saveAttendanceRecord(now, null);
+    
     toast.success("You have successfully checked in!");
   };
 
@@ -53,7 +82,62 @@ const CheckInOut = () => {
     setCheckOutTime(now);
     setStatus("out");
     setElapsedTime(null);
+    
+    // Clear localStorage
+    localStorage.setItem('staffCheckStatus', 'out');
+    localStorage.setItem('staffCheckOutTime', now.toISOString());
+    
+    // Update attendance record
+    if (checkInTime) {
+      saveAttendanceRecord(checkInTime, now);
+    }
+    
     toast.success("You have successfully checked out!");
+  };
+
+  const saveAttendanceRecord = (checkIn: Date, checkOut: Date | null) => {
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    if (!currentUser.id) return;
+    
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Get existing records
+    const attendanceRecords = JSON.parse(localStorage.getItem('attendanceRecords') || '[]');
+    
+    // Check if there's already a record for today and this user
+    const existingRecordIndex = attendanceRecords.findIndex(
+      (record: any) => record.date === today && record.userId === currentUser.id
+    );
+    
+    if (existingRecordIndex >= 0) {
+      // Update existing record
+      attendanceRecords[existingRecordIndex] = {
+        ...attendanceRecords[existingRecordIndex],
+        checkIn: checkIn.toLocaleTimeString(),
+        checkOut: checkOut ? checkOut.toLocaleTimeString() : null,
+        status: checkOut ? 'completed' : 'present',
+        hoursWorked: checkOut ? 
+          `${Math.round((checkOut.getTime() - checkIn.getTime()) / 36000) / 100}` : 
+          'In progress'
+      };
+    } else {
+      // Create new record
+      const newRecord = {
+        id: attendanceRecords.length + 1,
+        userId: currentUser.id,
+        date: today,
+        checkIn: checkIn.toLocaleTimeString(),
+        checkOut: checkOut ? checkOut.toLocaleTimeString() : null,
+        status: checkOut ? 'completed' : 'present',
+        hoursWorked: checkOut ? 
+          `${Math.round((checkOut.getTime() - checkIn.getTime()) / 36000) / 100}` : 
+          'In progress'
+      };
+      attendanceRecords.push(newRecord);
+    }
+    
+    // Save back to localStorage
+    localStorage.setItem('attendanceRecords', JSON.stringify(attendanceRecords));
   };
 
   const formatTime = (date: Date): string => {
