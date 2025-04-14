@@ -14,6 +14,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, isWithinInterval } from "date-fns";
 
 const meetingSchema = z.object({
   title: z.string().min(2, "Title must be at least 2 characters"),
@@ -126,20 +127,74 @@ const CalendarPage = ({ currentUser }: CalendarPageProps) => {
   });
 
   const hasEvent = (day: Date) => {
-    return events.some(event => 
-      event.date.getDate() === day.getDate() && 
-      event.date.getMonth() === day.getMonth() && 
-      event.date.getFullYear() === day.getFullYear()
-    );
+    if (selectedView === "week") {
+      // For week view, we'll consider the current week
+      if (!date) return false;
+      const weekStart = startOfWeek(date);
+      const weekEnd = endOfWeek(date);
+      return isWithinInterval(day, { start: weekStart, end: weekEnd }) && 
+             events.some(event => 
+               event.date.getDate() === day.getDate() && 
+               event.date.getMonth() === day.getMonth() && 
+               event.date.getFullYear() === day.getFullYear()
+             );
+    } else {
+      // For month or day view
+      return events.some(event => 
+        event.date.getDate() === day.getDate() && 
+        event.date.getMonth() === day.getMonth() && 
+        event.date.getFullYear() === day.getFullYear()
+      );
+    }
   };
 
-  const selectedDateEvents = date 
-    ? events.filter(event => 
-        event.date.getDate() === date.getDate() && 
-        event.date.getMonth() === date.getMonth() && 
-        event.date.getFullYear() === date.getFullYear()
-      ) 
-    : [];
+  // Filtered events based on view
+  const getFilteredEvents = () => {
+    if (!date) return [];
+    
+    switch (selectedView) {
+      case "day":
+        // Show only events for the selected day
+        return events.filter(event => 
+          event.date.getDate() === date.getDate() && 
+          event.date.getMonth() === date.getMonth() && 
+          event.date.getFullYear() === date.getFullYear()
+        );
+      case "week":
+        // Show events for the current week
+        const weekStart = startOfWeek(date);
+        const weekEnd = endOfWeek(date);
+        return events.filter(event => 
+          isWithinInterval(event.date, { start: weekStart, end: weekEnd })
+        );
+      case "month":
+      default:
+        // If selected date exists, show events for that day (default behavior)
+        return events.filter(event => 
+          event.date.getDate() === date.getDate() && 
+          event.date.getMonth() === date.getMonth() && 
+          event.date.getFullYear() === date.getFullYear()
+        );
+    }
+  };
+
+  const selectedDateEvents = getFilteredEvents();
+
+  const getViewTitle = () => {
+    if (!date) return "";
+    
+    switch (selectedView) {
+      case "day":
+        return format(date, "EEEE, MMMM d, yyyy");
+      case "week":
+        const weekStart = startOfWeek(date);
+        const weekEnd = endOfWeek(date);
+        return `${format(weekStart, "MMM d")} - ${format(weekEnd, "MMM d, yyyy")}`;
+      case "month":
+      default:
+        return format(date, "MMMM yyyy");
+    }
+  };
 
   const getEventTypeColor = (type: string) => {
     switch(type) {
@@ -179,19 +234,35 @@ const CalendarPage = ({ currentUser }: CalendarPageProps) => {
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <CalendarIcon className="h-5 w-5 text-muted-foreground" />
-          <h3 className="font-semibold">April 2025</h3>
+          <h3 className="font-semibold">{getViewTitle()}</h3>
         </div>
         <div className="flex gap-2">
-          <Select value={selectedView} onValueChange={setSelectedView}>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="View" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="day">Day</SelectItem>
-              <SelectItem value="week">Week</SelectItem>
-              <SelectItem value="month">Month</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex gap-1 border rounded-md p-1">
+            <Button 
+              variant={selectedView === "day" ? "default" : "ghost"} 
+              size="sm" 
+              onClick={() => setSelectedView("day")}
+              className="text-xs font-medium"
+            >
+              Day
+            </Button>
+            <Button 
+              variant={selectedView === "week" ? "default" : "ghost"} 
+              size="sm" 
+              onClick={() => setSelectedView("week")}
+              className="text-xs font-medium"
+            >
+              Week
+            </Button>
+            <Button 
+              variant={selectedView === "month" ? "default" : "ghost"} 
+              size="sm" 
+              onClick={() => setSelectedView("month")}
+              className="text-xs font-medium"
+            >
+              Month
+            </Button>
+          </div>
           
           {currentUser?.role === 'admin' && (
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -342,12 +413,11 @@ const CalendarPage = ({ currentUser }: CalendarPageProps) => {
           <CardHeader>
             <CardTitle>Events</CardTitle>
             <CardDescription>
-              {date ? date.toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              }) : "Select a date"}
+              {selectedView === "day" && date 
+                ? format(date, "EEEE, MMMM d, yyyy")
+                : selectedView === "week" && date
+                ? `${format(startOfWeek(date), "MMM d")} - ${format(endOfWeek(date), "MMM d")}`
+                : "Select a date"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -358,7 +428,7 @@ const CalendarPage = ({ currentUser }: CalendarPageProps) => {
                     <Badge className={getEventTypeColor(event.type)}>{event.type}</Badge>
                     <div>
                       <h4 className="font-medium">{event.title}</h4>
-                      <p className="text-sm text-muted-foreground">{event.time}</p>
+                      <p className="text-sm text-muted-foreground">{format(event.date, "MMM d, yyyy")} - {event.time}</p>
                       {event.description && (
                         <p className="text-sm mt-1">{event.description}</p>
                       )}
@@ -369,7 +439,13 @@ const CalendarPage = ({ currentUser }: CalendarPageProps) => {
             ) : (
               <div className="flex items-center justify-center h-40 flex-col gap-2">
                 <InfoIcon className="h-8 w-8 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground">No events scheduled for this date.</p>
+                <p className="text-muted-foreground">
+                  {selectedView === "day" 
+                    ? "No events scheduled for this day." 
+                    : selectedView === "week" 
+                    ? "No events scheduled for this week."
+                    : "No events scheduled for this date."}
+                </p>
               </div>
             )}
           </CardContent>
