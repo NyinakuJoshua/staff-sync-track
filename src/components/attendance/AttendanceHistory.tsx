@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,17 +9,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Download, Search } from "lucide-react";
 import { format } from "date-fns";
-
-interface AttendanceRecord {
-  id: number;
-  userId: number;
-  date: string;
-  checkIn?: string;
-  checkOut?: string | null;
-  hoursWorked?: string;
-  status: string;
-  notes?: string;
-}
+import { AttendanceRecord } from "@/types";
 
 const AttendanceHistory = () => {
   const [date, setDate] = useState<Date | undefined>(new Date());
@@ -42,7 +31,6 @@ const AttendanceHistory = () => {
 
     const allRecords = JSON.parse(localStorage.getItem('attendanceRecords') || '[]');
     
-    // Filter records for the current user
     const userRecords = allRecords.filter((record: AttendanceRecord) => 
       record.userId === currentUser.id
     );
@@ -51,7 +39,6 @@ const AttendanceHistory = () => {
     applyFilters(userRecords, statusFilter, month, searchTerm);
   };
 
-  // Apply filters whenever filter values change
   useEffect(() => {
     applyFilters(attendanceData, statusFilter, month, searchTerm);
   }, [statusFilter, month, searchTerm]);
@@ -59,17 +46,14 @@ const AttendanceHistory = () => {
   const applyFilters = (records: AttendanceRecord[], status: string, monthFilter: string, search: string) => {
     let filtered = [...records];
 
-    // Filter by month
     if (monthFilter) {
       filtered = filtered.filter(record => record.date.startsWith(monthFilter));
     }
 
-    // Filter by status
     if (status !== "all") {
       filtered = filtered.filter(record => record.status === status);
     }
 
-    // Filter by search term
     if (search) {
       const searchLower = search.toLowerCase();
       filtered = filtered.filter(record => 
@@ -79,11 +63,10 @@ const AttendanceHistory = () => {
       );
     }
 
-    // Sort by date, most recent first
     filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     
     setFilteredData(filtered);
-    setCurrentPage(1); // Reset to first page when filters change
+    setCurrentPage(1);
   };
 
   const handleMonthChange = (newDate: Date | undefined) => {
@@ -94,7 +77,6 @@ const AttendanceHistory = () => {
   };
 
   const handleDownload = () => {
-    // Generate CSV data
     const headers = ["Date", "Check In", "Check Out", "Hours Worked", "Status", "Notes"];
     const csvData = filteredData.map(record => [
       record.date,
@@ -107,7 +89,6 @@ const AttendanceHistory = () => {
     
     const csvContent = [headers, ...csvData].map(row => row.join(",")).join("\n");
     
-    // Create and download file
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -136,7 +117,6 @@ const AttendanceHistory = () => {
     }
   };
 
-  // Pagination controls
   const totalPages = Math.ceil(filteredData.length / recordsPerPage);
   const indexOfLastRecord = currentPage * recordsPerPage;
   const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;

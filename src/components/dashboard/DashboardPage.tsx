@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,29 +5,7 @@ import { UsersIcon, ClipboardCheckIcon, ClockIcon, CalendarIcon, AlertTriangleIc
 import AttendanceSummary from "./AttendanceSummary";
 import StaffStatusList from "./StaffStatusList";
 import RecentActivity from "./RecentActivity";
-
-interface User {
-  id: number;
-  staffId: string;
-  email: string;
-  name: string;
-  role: 'admin' | 'staff';
-  password: string;
-  department?: string;
-  position?: string;
-  dob?: string;
-  gender?: string;
-}
-
-interface AttendanceRecord {
-  id: number;
-  userId: number;
-  date: string;
-  checkIn?: string;
-  checkOut?: string;
-  status: 'present' | 'absent' | 'late' | 'leave';
-  note?: string;
-}
+import { User, AttendanceRecord } from "@/types";
 
 interface DashboardPageProps {
   users: User[];

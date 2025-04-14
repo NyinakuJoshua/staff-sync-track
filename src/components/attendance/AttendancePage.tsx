@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CheckInOut from "./CheckInOut";
 import AttendanceHistory from "./AttendanceHistory";
 import ManualAttendance from "./ManualAttendance";
+import { AttendanceRecord } from "@/types";
 
 const AttendancePage = () => {
   return (
