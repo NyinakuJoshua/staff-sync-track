@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import LoginForm from "@/components/auth/LoginForm";
 import AppLayout from "@/components/layout/AppLayout";
@@ -10,7 +9,7 @@ import ReportsPage from "@/components/reports/ReportsPage";
 import AnalyticsPage from "@/components/analytics/AnalyticsPage";
 import ProfilePage from "@/components/profile/ProfilePage";
 import { toast } from "sonner";
-import { User, AttendanceRecord, CalendarEvent } from "@/types";
+import { User, AttendanceRecord, CalendarEvent, CheckInStatus } from "@/types";
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -19,17 +18,12 @@ const Index = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   
-  // Persist check-in state between page navigation
-  const [checkInStatus, setCheckInStatus] = useState<{
-    isCheckedIn: boolean;
-    checkInTime: string | null;
-  }>({
+  const [checkInStatus, setCheckInStatus] = useState<CheckInStatus>({
     isCheckedIn: false,
     checkInTime: null
   });
 
   useEffect(() => {
-    // Load initial user data and attendance records
     const savedRecords = localStorage.getItem('attendanceRecords');
     if (savedRecords) {
       setAttendanceRecords(JSON.parse(savedRecords));
@@ -71,17 +65,14 @@ const Index = () => {
       setUsers(JSON.parse(savedUsers));
     }
     
-    // Load persisted check-in state from localStorage
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
       const user = JSON.parse(savedUser);
       setCurrentUser(user);
       setIsAuthenticated(true);
       
-      // Set current page based on user role
       setCurrentPage(user.role === 'admin' ? 'dashboard' : 'attendance');
       
-      // Check if user is checked in
       const checkStatus = localStorage.getItem('staffCheckStatus');
       const checkInTime = localStorage.getItem('staffCheckInTime');
       
@@ -138,7 +129,6 @@ const Index = () => {
       toast.success(`Welcome back, ${user.name}!`);
       setCurrentPage(user.role === 'admin' ? 'dashboard' : 'attendance');
       
-      // Check if user already has check-in status
       const checkStatus = localStorage.getItem('staffCheckStatus');
       const checkInTime = localStorage.getItem('staffCheckInTime');
       
@@ -198,7 +188,6 @@ const Index = () => {
     setCurrentUser(null);
     setCurrentPage("dashboard");
     
-    // Clear check-in status only if user manually logs out
     localStorage.removeItem('currentUser');
     localStorage.removeItem('staffCheckStatus');
     localStorage.removeItem('staffCheckInTime');
