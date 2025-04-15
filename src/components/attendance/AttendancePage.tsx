@@ -5,9 +5,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CheckInOut from "./CheckInOut";
 import AttendanceHistory from "./AttendanceHistory";
 import ManualAttendance from "./ManualAttendance";
-import { AttendanceRecord } from "@/types";
+import { AttendanceRecord, CheckInStatus } from "@/types";
 
-const AttendancePage = () => {
+interface AttendancePageProps {
+  checkInStatus?: CheckInStatus;
+  setCheckInStatus?: React.Dispatch<React.SetStateAction<CheckInStatus>>;
+}
+
+const AttendancePage = ({ checkInStatus, setCheckInStatus }: AttendancePageProps) => {
   return (
     <div className="space-y-6">
       <div>

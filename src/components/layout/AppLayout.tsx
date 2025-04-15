@@ -1,6 +1,7 @@
 
 import { ReactNode, useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
+import { CheckInStatus } from "@/types";
 
 interface User {
   id: number;
@@ -21,9 +22,10 @@ interface AppLayoutProps {
   onPageChange: (page: string) => void;
   onLogout: () => void;
   currentUser?: User | null;
+  checkInStatus?: CheckInStatus;
 }
 
-const AppLayout = ({ children, currentPage, onPageChange, onLogout, currentUser }: AppLayoutProps) => {
+const AppLayout = ({ children, currentPage, onPageChange, onLogout, currentUser, checkInStatus }: AppLayoutProps) => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {

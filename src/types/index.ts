@@ -47,3 +47,8 @@ export interface CalendarEvent {
   attendees?: number[];
   isVisible?: boolean; // To control visibility for staff/admin
 }
+
+export interface CheckInStatus {
+  isCheckedIn: boolean;
+  checkInTime: string | null;
+}
