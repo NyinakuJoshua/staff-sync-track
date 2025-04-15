@@ -1,73 +1,88 @@
-# Welcome to your Lovable project
 
-## Project info
+# Staff Sync Track - Staff Attendance Management System
 
-**URL**: https://lovable.dev/projects/6f83748b-372f-46ec-860f-b5e845cee2b7
+## Overview
 
-## How can I edit this code?
+Staff Sync Track is a comprehensive staff attendance management system that enables organizations to efficiently track staff check-in/out activities, generate reports, and manage staff records. The system provides different interfaces for administrators and regular staff members.
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+### Authentication
+- **User Login**: Staff members and administrators can sign in using their Staff ID, email, and password
+- **User Registration**: New staff members can register for an account with role-based permissions
+- **Persistent Login**: User credentials are saved locally, allowing users to log back in without re-registering
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/6f83748b-372f-46ec-860f-b5e845cee2b7) and start prompting.
+### Admin Features
+- **Dashboard**: Overview of attendance stats, recent activity, and staff status
+- **Staff Management**: View and manage staff members, including role assignment
+- **Reports**: Generate and view attendance reports for all staff members
+- **Analytics**: Visualize attendance data with charts and graphs
 
-Changes made via Lovable will be committed automatically to this repo.
+### Staff Features
+- **Check In/Out**: Record daily attendance with automatic time tracking
+- **Attendance History**: View personal attendance records
+- **Submit Comments**: Submit absence or lateness explanations
+- **Profile Management**: Update personal information and credentials
 
-**Use your preferred IDE**
+### General Features
+- **Role-Based Access Control**: Different interfaces and permissions for admins vs. staff
+- **Responsive Design**: Works on desktop and mobile devices
+- **Data Persistence**: All data is saved locally for demonstration purposes
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Technical Architecture
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Frontend
+- Built with React and TypeScript
+- Uses Tailwind CSS for styling
+- Uses ShadCN UI component library
+- State management through React Context API
 
-Follow these steps:
+### Data Storage
+- Local storage for data persistence (can be extended to use a backend database)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## User Types
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Administrator
+- Has access to all system features
+- Can manage staff accounts
+- Can view and generate reports
+- Default login:
+  - Staff ID: ADMIN001
+  - Email: admin@example.com
+  - Password: admin123
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Staff Member
+- Limited access focused on personal attendance
+- Can check in/out
+- Can view personal attendance history
+- Can update personal profile
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## Setup and Installation
 
-**Edit a file directly in GitHub**
+1. Clone the repository
+2. Install dependencies using `npm install`
+3. Start the development server using `npm run dev`
+4. Access the application at http://localhost:5173/
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Usage Guide
 
-**Use GitHub Codespaces**
+### For Administrators
+1. Log in with admin credentials
+2. Use the sidebar to navigate between different sections
+3. Monitor staff attendance from the dashboard
+4. Manage staff accounts in the Staff section
+5. Generate reports on attendance data
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### For Staff Members
+1. Sign up for a new account or log in with existing credentials
+2. Use the Check In/Out feature to record daily attendance
+3. View attendance history to monitor past records
+4. Update profile information as needed
 
-## What technologies are used for this project?
+## License
 
-This project is built with:
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Support
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/6f83748b-372f-46ec-860f-b5e845cee2b7) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes it is!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+For any questions or issues, please contact [support@staffsynctrack.com](mailto:support@staffsynctrack.com).

@@ -29,6 +29,17 @@ export function AuthProvider({ children, users, setUsers }: {
     checkInTime: null
   });
 
+  // Load users from localStorage on first load if not already loaded
+  useEffect(() => {
+    if (users.length === 0) {
+      const savedUsers = localStorage.getItem('staffSyncUsers');
+      if (savedUsers) {
+        const loadedUsers = JSON.parse(savedUsers);
+        setUsers(loadedUsers);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     const savedUser = localStorage.getItem('currentUser');
     if (savedUser) {
@@ -48,8 +59,19 @@ export function AuthProvider({ children, users, setUsers }: {
     }
   }, []);
 
+  // Save users to localStorage whenever they change
+  useEffect(() => {
+    if (users.length > 0) {
+      localStorage.setItem('staffSyncUsers', JSON.stringify(users));
+    }
+  }, [users]);
+
   const login = (staffId: string, email: string, password: string) => {
-    const user = users.find(u => u.staffId === staffId && u.email === email && u.password === password);
+    // Make sure we have the latest user data
+    const savedUsers = localStorage.getItem('staffSyncUsers');
+    const currentUsers = savedUsers ? JSON.parse(savedUsers) : users;
+    
+    const user = currentUsers.find(u => u.staffId === staffId && u.email === email && u.password === password);
     
     if (user) {
       setCurrentUser(user);
@@ -90,7 +112,11 @@ export function AuthProvider({ children, users, setUsers }: {
   };
 
   const signup = (name: string, email: string, password: string, role: 'admin' | 'staff', department: string, position: string, dob: string, gender: string, phoneNumber: string) => {
-    if (users.some(user => user.email === email)) {
+    // Ensure we have the latest users array from localStorage
+    const savedUsers = localStorage.getItem('staffSyncUsers');
+    const currentUsers = savedUsers ? JSON.parse(savedUsers) : users;
+    
+    if (currentUsers.some((user: User) => user.email === email)) {
       toast.error("Email already exists");
       return;
     }
@@ -98,12 +124,12 @@ export function AuthProvider({ children, users, setUsers }: {
     let staffId = '';
     
     if (role === 'admin') {
-      const existingAdmins = users.filter(user => user.role === 'admin');
+      const existingAdmins = currentUsers.filter((user: User) => user.role === 'admin');
       const newAdminNumber = (existingAdmins.length + 1).toString().padStart(3, '0');
       staffId = `ADMIN${newAdminNumber}`;
     } else {
       const deptPrefix = department.substring(0, 3).toUpperCase();
-      const existingDeptUsers = users.filter(user => 
+      const existingDeptUsers = currentUsers.filter((user: User) => 
         user.department === department || 
         (user.staffId && user.staffId.startsWith(deptPrefix))
       );
@@ -112,7 +138,7 @@ export function AuthProvider({ children, users, setUsers }: {
     }
     
     const newUser: User = {
-      id: users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1,
+      id: currentUsers.length > 0 ? Math.max(...currentUsers.map((u: User) => u.id)) + 1 : 1,
       staffId,
       email,
       password,
@@ -125,7 +151,12 @@ export function AuthProvider({ children, users, setUsers }: {
       phoneNumber
     };
     
-    setUsers([...users, newUser]);
+    const updatedUsers = [...currentUsers, newUser];
+    setUsers(updatedUsers);
+    
+    // Save to localStorage immediately to ensure it persists
+    localStorage.setItem('staffSyncUsers', JSON.stringify(updatedUsers));
+    
     toast.success(`Account created successfully! Your Staff ID is: ${staffId}`);
   };
 

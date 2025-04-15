@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { LogInIcon, LogOutIcon } from "lucide-react";
 import { toast } from "sonner";
+import { useAttendance } from "@/contexts/AttendanceContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { AttendanceRecord } from "@/types";
 
 const CheckInOut = () => {
@@ -13,6 +15,8 @@ const CheckInOut = () => {
   const [checkInTime, setCheckInTime] = useState<Date | null>(null);
   const [checkOutTime, setCheckOutTime] = useState<Date | null>(null);
   const [elapsedTime, setElapsedTime] = useState<string | null>(null);
+  const { attendanceRecords, setAttendanceRecords } = useAttendance();
+  const { currentUser, setCheckInStatus } = useAuth();
 
   // Load check-in state from localStorage on component mount
   useEffect(() => {
@@ -64,9 +68,20 @@ const CheckInOut = () => {
   }, [status, checkInTime]);
 
   const handleCheckIn = () => {
+    if (!currentUser) {
+      toast.error("You must be logged in to check in");
+      return;
+    }
+    
     const now = new Date();
     setCheckInTime(now);
     setStatus("in");
+    
+    // Update check-in status in AuthContext
+    setCheckInStatus({
+      isCheckedIn: true,
+      checkInTime: now.toLocaleTimeString()
+    });
     
     // Save to localStorage
     localStorage.setItem('staffCheckStatus', 'in');
@@ -79,10 +94,21 @@ const CheckInOut = () => {
   };
 
   const handleCheckOut = () => {
+    if (!currentUser) {
+      toast.error("You must be logged in to check out");
+      return;
+    }
+    
     const now = new Date();
     setCheckOutTime(now);
     setStatus("out");
     setElapsedTime(null);
+    
+    // Update check-in status in AuthContext
+    setCheckInStatus({
+      isCheckedIn: false,
+      checkInTime: null
+    });
     
     // Clear localStorage
     localStorage.setItem('staffCheckStatus', 'out');
@@ -97,48 +123,43 @@ const CheckInOut = () => {
   };
 
   const saveAttendanceRecord = (checkIn: Date, checkOut: Date | null) => {
-    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-    if (!currentUser.id) return;
+    if (!currentUser) return;
     
     const today = new Date().toISOString().split('T')[0];
     
-    // Get existing records
-    const attendanceRecords = JSON.parse(localStorage.getItem('attendanceRecords') || '[]');
-    
     // Check if there's already a record for today and this user
     const existingRecordIndex = attendanceRecords.findIndex(
-      (record: any) => record.date === today && record.userId === currentUser.id
+      (record) => record.date === today && record.userId === currentUser.id
     );
     
+    const hoursWorked = checkOut ? 
+      `${Math.round((checkOut.getTime() - checkIn.getTime()) / 36000) / 100}` : 
+      'In progress';
+      
     if (existingRecordIndex >= 0) {
       // Update existing record
-      attendanceRecords[existingRecordIndex] = {
-        ...attendanceRecords[existingRecordIndex],
+      const updatedRecords = [...attendanceRecords];
+      updatedRecords[existingRecordIndex] = {
+        ...updatedRecords[existingRecordIndex],
         checkIn: checkIn.toLocaleTimeString(),
-        checkOut: checkOut ? checkOut.toLocaleTimeString() : null,
+        checkOut: checkOut ? checkOut.toLocaleTimeString() : undefined,
         status: checkOut ? 'completed' : 'present',
-        hoursWorked: checkOut ? 
-          `${Math.round((checkOut.getTime() - checkIn.getTime()) / 36000) / 100}` : 
-          'In progress'
+        hoursWorked
       };
+      setAttendanceRecords(updatedRecords);
     } else {
       // Create new record
-      const newRecord = {
-        id: attendanceRecords.length + 1,
+      const newRecord: AttendanceRecord = {
+        id: attendanceRecords.length > 0 ? Math.max(...attendanceRecords.map(record => record.id)) + 1 : 1,
         userId: currentUser.id,
         date: today,
         checkIn: checkIn.toLocaleTimeString(),
-        checkOut: checkOut ? checkOut.toLocaleTimeString() : null,
+        checkOut: checkOut ? checkOut.toLocaleTimeString() : undefined,
         status: checkOut ? 'completed' : 'present',
-        hoursWorked: checkOut ? 
-          `${Math.round((checkOut.getTime() - checkIn.getTime()) / 36000) / 100}` : 
-          'In progress'
+        hoursWorked
       };
-      attendanceRecords.push(newRecord);
+      setAttendanceRecords([...attendanceRecords, newRecord]);
     }
-    
-    // Save back to localStorage
-    localStorage.setItem('attendanceRecords', JSON.stringify(attendanceRecords));
   };
 
   const formatTime = (date: Date): string => {

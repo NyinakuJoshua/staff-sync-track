@@ -6,6 +6,7 @@ import CheckInOut from "./CheckInOut";
 import AttendanceHistory from "./AttendanceHistory";
 import ManualAttendance from "./ManualAttendance";
 import { AttendanceRecord, CheckInStatus } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AttendancePageProps {
   checkInStatus?: CheckInStatus;
@@ -13,6 +14,8 @@ interface AttendancePageProps {
 }
 
 const AttendancePage = ({ checkInStatus, setCheckInStatus }: AttendancePageProps) => {
+  const { currentUser } = useAuth();
+  
   return (
     <div className="space-y-6">
       <div>

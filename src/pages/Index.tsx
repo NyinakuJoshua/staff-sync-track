@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { AttendanceProvider, useAttendance } from "@/contexts/AttendanceContext";
 import { useNavigation } from "@/hooks/useNavigation";
 import { User } from "@/types";
+import { sampleUsers } from "@/data/sampleUsers";
 
 const AuthenticatedApp = () => {
   const { currentUser, checkInStatus, setCheckInStatus, logout, updateCredentials, updateProfile } = useAuth();
@@ -85,25 +86,22 @@ const UnauthenticatedApp = () => {
 
 const AppContent = () => {
   const { isAuthenticated } = useAuth();
-  const [users, setUsers] = useState<User[]>([]);
-
-  useEffect(() => {
-    const savedUsers = localStorage.getItem('staffSyncUsers');
-    if (savedUsers) {
-      setUsers(JSON.parse(savedUsers));
-    }
-  }, []);
-
+  
   return isAuthenticated ? <AuthenticatedApp /> : <UnauthenticatedApp />;
 };
 
 const Index = () => {
   const [users, setUsers] = useState<User[]>([]);
 
+  // Load users from localStorage or use sample data on first run
   useEffect(() => {
     const savedUsers = localStorage.getItem('staffSyncUsers');
     if (savedUsers) {
       setUsers(JSON.parse(savedUsers));
+    } else {
+      // Initialize with sample users on first run
+      setUsers(sampleUsers);
+      localStorage.setItem('staffSyncUsers', JSON.stringify(sampleUsers));
     }
   }, []);
 
