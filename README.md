@@ -1,88 +1,79 @@
 
 # Staff Sync Track - Staff Attendance Management System
 
-## Overview
+## Software Requirements
 
-Staff Sync Track is a comprehensive staff attendance management system that enables organizations to efficiently track staff check-in/out activities, generate reports, and manage staff records. The system provides different interfaces for administrators and regular staff members.
+### Minimum System Requirements
+- Operating System: 
+  - Windows 10/11
+  - macOS 10.14 or later
+  - Linux (Ubuntu 20.04 or equivalent)
 
-## Features
+### Required Software
+1. **Node.js**
+   - Version: 18.x or 20.x LTS
+   - Download: [Node.js Official Website](https://nodejs.org/)
+   - Recommended: Use Node Version Manager (nvm) for easy version management
 
-### Authentication
-- **User Login**: Staff members and administrators can sign in using their Staff ID, email, and password
-- **User Registration**: New staff members can register for an account with role-based permissions
-- **Persistent Login**: User credentials are saved locally, allowing users to log back in without re-registering
+2. **Package Manager**
+   - npm (comes with Node.js)
+   - OR Yarn (version 1.22.x or later)
+   - OR Bun (version 1.0.x or later)
 
-### Admin Features
-- **Dashboard**: Overview of attendance stats, recent activity, and staff status
-- **Staff Management**: View and manage staff members, including role assignment
-- **Reports**: Generate and view attendance reports for all staff members
-- **Analytics**: Visualize attendance data with charts and graphs
+3. **Web Browser**
+   - Google Chrome (Recommended, Version 90 or later)
+   - Mozilla Firefox (Version 88 or later)
+   - Microsoft Edge (Version 90 or later)
+   - Safari (Version 14 or later)
 
-### Staff Features
-- **Check In/Out**: Record daily attendance with automatic time tracking
-- **Attendance History**: View personal attendance records
-- **Submit Comments**: Submit absence or lateness explanations
-- **Profile Management**: Update personal information and credentials
+### Development Tools (Optional but Recommended)
+- Visual Studio Code
+- Git (for version control)
+- Chrome DevTools
+- React Developer Tools browser extension
 
-### General Features
-- **Role-Based Access Control**: Different interfaces and permissions for admins vs. staff
-- **Responsive Design**: Works on desktop and mobile devices
-- **Data Persistence**: All data is saved locally for demonstration purposes
+### Installation Steps
+```bash
+# Clone the repository
+git clone https://github.com/your-repo/staff-sync-track.git
 
-## Technical Architecture
+# Navigate to project directory
+cd staff-sync-track
 
-### Frontend
-- Built with React and TypeScript
-- Uses Tailwind CSS for styling
-- Uses ShadCN UI component library
-- State management through React Context API
+# Install dependencies
+npm install
+# OR
+yarn install
+# OR 
+bun install
 
-### Data Storage
-- Local storage for data persistence (can be extended to use a backend database)
+# Start the development server
+npm run dev
+# OR
+yarn dev
+# OR
+bun dev
+```
 
-## User Types
+### Supported Browsers
+- Chrome: Latest 2 versions
+- Firefox: Latest 2 versions
+- Safari: Latest 2 versions
+- Edge: Latest 2 versions
 
-### Administrator
-- Has access to all system features
-- Can manage staff accounts
-- Can view and generate reports
-- Default login:
-  - Staff ID: ADMIN001
-  - Email: admin@example.com
-  - Password: admin123
+### Hardware Requirements
+- Minimum 4GB RAM
+- Minimum 2 GHz dual-core processor
+- At least 2GB free disk space
+- Stable internet connection
 
-### Staff Member
-- Limited access focused on personal attendance
-- Can check in/out
-- Can view personal attendance history
-- Can update personal profile
+## Troubleshooting
+If you encounter any installation issues:
+- Ensure you have the correct Node.js version
+- Clear npm/yarn cache
+- Delete node_modules folder and reinstall dependencies
 
-## Setup and Installation
-
-1. Clone the repository
-2. Install dependencies using `npm install`
-3. Start the development server using `npm run dev`
-4. Access the application at http://localhost:5173/
-
-## Usage Guide
-
-### For Administrators
-1. Log in with admin credentials
-2. Use the sidebar to navigate between different sections
-3. Monitor staff attendance from the dashboard
-4. Manage staff accounts in the Staff section
-5. Generate reports on attendance data
-
-### For Staff Members
-1. Sign up for a new account or log in with existing credentials
-2. Use the Check In/Out feature to record daily attendance
-3. View attendance history to monitor past records
-4. Update profile information as needed
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For any questions or issues, please contact [support@staffsynctrack.com](mailto:support@staffsynctrack.com).
+## Performance Recommendations
+- Use latest version of supported browsers
+- Maintain updated Node.js version
+- Use a modern computer with at least 8GB RAM for optimal performance
