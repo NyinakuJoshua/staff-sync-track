@@ -19,7 +19,7 @@ export interface AttendanceRecord {
   date: string;
   checkIn?: string;
   checkOut?: string;
-  status: 'present' | 'absent' | 'late' | 'leave' | 'completed';
+  status: 'present' | 'absent' | 'late' | 'leave';
   hoursWorked?: string;
   note?: string;
 }

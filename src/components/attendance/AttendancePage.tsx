@@ -7,6 +7,7 @@ import AttendanceHistory from "./AttendanceHistory";
 import ManualAttendance from "./ManualAttendance";
 import { AttendanceRecord, CheckInStatus } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AttendancePageProps {
   checkInStatus?: CheckInStatus;
@@ -15,21 +16,22 @@ interface AttendancePageProps {
 
 const AttendancePage = ({ checkInStatus, setCheckInStatus }: AttendancePageProps) => {
   const { currentUser } = useAuth();
+  const isMobile = useIsMobile();
   
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Attendance Management</h2>
+        <h2 className={`font-bold tracking-tight ${isMobile ? "text-2xl" : "text-3xl"}`}>Attendance Management</h2>
         <p className="text-muted-foreground">
           Track and manage your attendance records
         </p>
       </div>
 
       <Tabs defaultValue="check" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="check">Check In/Out</TabsTrigger>
-          <TabsTrigger value="comment">Submit Comment</TabsTrigger>
-          <TabsTrigger value="history">Attendance History</TabsTrigger>
+        <TabsList className={`${isMobile ? "w-full" : ""}`}>
+          <TabsTrigger value="check" className={`${isMobile ? "flex-1" : ""}`}>Check In/Out</TabsTrigger>
+          <TabsTrigger value="comment" className={`${isMobile ? "flex-1" : ""}`}>Submit Comment</TabsTrigger>
+          <TabsTrigger value="history" className={`${isMobile ? "flex-1" : ""}`}>History</TabsTrigger>
         </TabsList>
         <TabsContent value="check" className="space-y-4">
           <CheckInOut />

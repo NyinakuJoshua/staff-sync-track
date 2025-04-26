@@ -20,9 +20,10 @@ interface SidebarProps {
   onLogout: () => void;
   currentPage: string;
   userRole: 'admin' | 'staff';
+  isMobile?: boolean;
 }
 
-const Sidebar = ({ onPageChange, onLogout, currentPage, userRole }: SidebarProps) => {
+const Sidebar = ({ onPageChange, onLogout, currentPage, userRole, isMobile = false }: SidebarProps) => {
   const [collapsed, setCollapsed] = useState(false);
 
   // Define menu items based on user role
@@ -61,25 +62,30 @@ const Sidebar = ({ onPageChange, onLogout, currentPage, userRole }: SidebarProps
 
   const menuItems = getMenuItems();
 
+  // Mobile sidebar doesn't support collapsing
+  const effectiveCollapsed = isMobile ? false : collapsed;
+
   return (
     <div
       className={cn(
         "h-screen bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300",
-        collapsed ? "w-16" : "w-60"
+        isMobile ? "w-full" : effectiveCollapsed ? "w-16" : "w-60"
       )}
     >
       <div className="flex items-center justify-between p-4">
-        {!collapsed && (
+        {!effectiveCollapsed && (
           <h1 className="text-xl font-bold">Staff Sync</h1>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setCollapsed(!collapsed)}
-          className="text-sidebar-foreground hover:bg-sidebar-accent"
-        >
-          <MenuIcon className="h-5 w-5" />
-        </Button>
+        {!isMobile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setCollapsed(!collapsed)}
+            className="text-sidebar-foreground hover:bg-sidebar-accent"
+          >
+            <MenuIcon className="h-5 w-5" />
+          </Button>
+        )}
       </div>
       <Separator className="bg-sidebar-border" />
       <div className="flex-1 py-4">
@@ -91,11 +97,11 @@ const Sidebar = ({ onPageChange, onLogout, currentPage, userRole }: SidebarProps
             className={cn(
               "w-full justify-start px-3 py-2 my-1 hover:bg-sidebar-accent",
               currentPage === item.id && "bg-sidebar-accent",
-              collapsed ? "px-2" : "px-4"
+              effectiveCollapsed ? "px-2" : "px-4"
             )}
           >
-            <item.icon className={cn("h-5 w-5", collapsed ? "mr-0" : "mr-2")} />
-            {!collapsed && <span>{item.label}</span>}
+            <item.icon className={cn("h-5 w-5", effectiveCollapsed ? "mr-0" : "mr-2")} />
+            {!effectiveCollapsed && <span>{item.label}</span>}
           </Button>
         ))}
       </div>
@@ -106,11 +112,11 @@ const Sidebar = ({ onPageChange, onLogout, currentPage, userRole }: SidebarProps
           onClick={onLogout}
           className={cn(
             "w-full justify-start hover:bg-sidebar-accent text-sidebar-foreground",
-            collapsed ? "px-2" : "px-4"
+            effectiveCollapsed ? "px-2" : "px-4"
           )}
         >
-          <LogOutIcon className={cn("h-5 w-5", collapsed ? "mr-0" : "mr-2")} />
-          {!collapsed && <span>Logout</span>}
+          <LogOutIcon className={cn("h-5 w-5", effectiveCollapsed ? "mr-0" : "mr-2")} />
+          {!effectiveCollapsed && <span>Logout</span>}
         </Button>
       </div>
     </div>
